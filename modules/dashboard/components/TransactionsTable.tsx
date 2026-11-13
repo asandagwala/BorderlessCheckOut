@@ -36,7 +36,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
                 return (
                   <tr key={tx.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 font-medium ${isIncoming ? 'text-emerald-600' : 'text-blue-600'}`}>
+                      <span className={`inline-flex items-center gap-1 font-medium ${isIncoming ? 'text-[#700c20]' : 'text-blue-600'}`}>
                         {isIncoming ? <ArrowDownLeft className="w-3.5 h-3.5" /> : <ArrowUpRight className="w-3.5 h-3.5" />}
                         {isIncoming ? 'Payment In' : 'Supplier Payout'}
                       </span>
@@ -46,7 +46,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
                         href={`https://sepolia.basescan.org/tx/${tx.txHash}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 font-medium"
+                        className="inline-flex items-center gap-1 text-zinc-900 dark:text-zinc-100 hover:text-[#700c20] font-medium"
                       >
                         <span>{tx.txHash.slice(0, 8)}...{tx.txHash.slice(-6)}</span>
                         <ExternalLink className="w-3 h-3 text-zinc-400" />
@@ -83,3 +83,4 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
     </Card>
   );
 }
+

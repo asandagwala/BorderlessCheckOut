@@ -68,7 +68,7 @@ export function CreateOrderModal({ merchantId, isOpen, onClose, onOrderCreated }
         <CardContent className="space-y-4">
           {createdOrder ? (
             <div className="space-y-4 text-center py-2">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-full bg-[#f8edf0] text-[#700c20] flex items-center justify-center mx-auto">
                 <Check className="w-6 h-6" />
               </div>
               <div>
@@ -80,14 +80,14 @@ export function CreateOrderModal({ merchantId, isOpen, onClose, onOrderCreated }
 
               <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 p-2 rounded-lg text-xs font-mono truncate">
                 <span className="truncate flex-1 text-left">{checkoutUrl}</span>
-                <button onClick={copyLink} className="p-1 hover:text-emerald-600">
-                  {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                <button onClick={copyLink} className="p-1 hover:text-[#700c20]">
+                  {copiedLink ? <Check className="w-4 h-4 text-[#700c20]" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
 
               <div className="flex gap-2 pt-2">
                 <Link href={`/checkout/${createdOrder.id}`} target="_blank" className="flex-1">
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
+                  <Button className="w-full bg-[#700c20] hover:bg-[#580918] text-white text-xs">
                     Open Checkout Page <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
                   </Button>
                 </Link>
@@ -131,7 +131,7 @@ export function CreateOrderModal({ merchantId, isOpen, onClose, onOrderCreated }
                 <Button type="button" variant="outline" size="sm" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button type="submit" size="sm" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Button type="submit" size="sm" disabled={loading} className="bg-[#700c20] hover:bg-[#580918] text-white">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
                   Generate Order
                 </Button>

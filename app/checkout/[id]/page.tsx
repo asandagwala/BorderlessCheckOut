@@ -213,7 +213,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#700c20]" />
           <p className="text-sm font-medium text-zinc-600">Loading secure checkout...</p>
         </div>
       </div>
@@ -248,7 +248,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
       {/* Top Header */}
       <header className="max-w-4xl mx-auto w-full flex items-center justify-between pb-6 border-b border-zinc-200 dark:border-zinc-800 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-[#700c20] flex items-center justify-center text-white font-bold text-lg shadow-sm">
             BC
           </div>
           <div>
@@ -276,7 +276,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
           <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium uppercase tracking-wider">
-                <Building2 className="w-4 h-4 text-emerald-600" />
+                <Building2 className="w-4 h-4 text-[#700c20]" />
                 Merchant Store
               </div>
               <CardTitle className="text-xl text-zinc-900 dark:text-zinc-50">
@@ -296,7 +296,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                 <div className="flex items-center gap-1.5 font-mono font-medium text-zinc-900 dark:text-zinc-100">
                   <span>{order.paymentReference}</span>
                   <button onClick={() => copyToClipboard(order.paymentReference, 'ref')} className="text-zinc-400 hover:text-zinc-600">
-                    {copiedRef ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedRef ? <Check className="w-3.5 h-3.5 text-[#700c20]" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -306,7 +306,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
               </div>
               <div className="flex justify-between items-center pt-3 border-t border-zinc-200 dark:border-zinc-800">
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#700c20] dark:text-emerald-400 block">
                     USDC Due at Checkout
                   </span>
                   <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
@@ -332,7 +332,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
           {/* Security & Verification Card */}
           <Card className="border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/50 shadow-none text-xs text-zinc-500 p-4 space-y-2">
             <div className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <ShieldCheck className="w-4 h-4 text-[#700c20]" />
               Automated Blockchain Verification
             </div>
             <p className="leading-relaxed">
@@ -363,7 +363,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
               {isPaid ? (
                 /* Payment Success View */
                 <div className="py-8 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 ring-8 ring-emerald-50 dark:ring-emerald-950/30">
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-[#700c20] dark:text-emerald-400 ring-8 ring-emerald-50 dark:ring-emerald-950/30">
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
                   <div>
@@ -383,7 +383,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                         href={`https://sepolia.basescan.org/tx/${confirmedTxHash}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 pt-1"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#700c20] hover:text-[#580918] pt-1"
                       >
                         View on BaseScan Sepolia <ExternalLink className="w-3 h-3" />
                       </a>
@@ -392,7 +392,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
 
                   <div className="pt-4 flex gap-3">
                     <Link href="/dashboard">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <Button className="bg-[#700c20] hover:bg-[#580918] text-white">
                         Return to Store Dashboard <ArrowRight className="w-4 h-4 ml-1.5" />
                       </Button>
                     </Link>
@@ -405,7 +405,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                   <div className="p-4 bg-zinc-50 dark:bg-zinc-800/40 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-emerald-600" />
+                        <Wallet className="w-4 h-4 text-[#700c20]" />
                         1. Connect Wallet
                       </span>
                       {walletConnected ? (
@@ -444,7 +444,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                         <div className="flex items-center gap-1 font-mono text-[11px] text-zinc-900 dark:text-zinc-100 mt-0.5 bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded">
                           <span className="truncate">{merchant.walletAddress}</span>
                           <button onClick={() => copyToClipboard(merchant.walletAddress, 'address')} className="text-zinc-400 hover:text-zinc-600 shrink-0">
-                            {copiedAddress ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedAddress ? <Check className="w-3.5 h-3.5 text-[#700c20]" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </div>
@@ -469,7 +469,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                     <Button
                       onClick={() => handlePayUsdc(false)}
                       disabled={submittingPayment || verifyingOnChain || !walletConnected}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-5 shadow-sm text-sm"
+                      className="w-full bg-[#700c20] hover:bg-[#580918] text-white font-medium py-5 shadow-sm text-sm"
                     >
                       {submittingPayment ? (
                         <>
@@ -491,7 +491,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                       <button
                         onClick={() => handlePayUsdc(true)}
                         disabled={submittingPayment || verifyingOnChain}
-                        className="text-xs text-zinc-500 hover:text-emerald-600 underline cursor-pointer"
+                        className="text-xs text-zinc-500 hover:text-[#700c20] underline cursor-pointer"
                       >
                         ⚡ Fast-track Demo: Simulate Verified Testnet Payment (No Wallet Required)
                       </button>
@@ -518,7 +518,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
       fallback={
         <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#700c20]" />
             <p className="text-sm font-medium text-zinc-600">Loading secure checkout...</p>
           </div>
         </div>
@@ -528,3 +528,4 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
     </Suspense>
   );
 }
+

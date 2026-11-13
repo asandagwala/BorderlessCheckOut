@@ -1,11 +1,11 @@
+
 'use client';
 
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Bot, Send, User, Sparkles, Loader2, Database, ShieldAlert } from 'lucide-react';
+import { Bot, Send, User, Loader2, Database, ShieldAlert, X } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -15,7 +15,7 @@ interface ChatMessage {
   timestamp: string;
 }
 
-export function ChatbotView({ merchantId }: { merchantId: string }) {
+export function ChatbotView({ merchantId, onClose }: { merchantId: string; onClose?: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg_welcome',
@@ -92,11 +92,11 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
   };
 
   return (
-    <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col h-[650px]">
+    <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col h-full min-h-0">
       <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800 flex flex-row items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600/10 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-[#700c20]/10 text-[#700c20] flex items-center justify-center font-bold">
               <Bot className="w-5 h-5" />
             </div>
             <div>
@@ -107,13 +107,15 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md">
-          <ShieldAlert className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Read-Only • No Transaction Execution Rights</span>
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-md">
+            <ShieldAlert className="w-3.5 h-3.5 text-[#700c20]" />
+            <span>Read-only assistant</span>
+          </div>
+          {onClose && <button type="button" onClick={onClose} aria-label="Close assistant" className="rounded-full p-2 hover:bg-[#f8edf0] text-[#700c20]"><X size={17}/></button>}
         </div>
       </CardHeader>
 
-      {/* Chat Messages */}
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((m) => (
           <div
@@ -121,7 +123,7 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
             className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {m.sender === 'assistant' && (
-              <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white shrink-0 mt-0.5">
+              <div className="w-7 h-7 rounded-full bg-[#700c20] flex items-center justify-center text-white shrink-0 mt-0.5">
                 <Bot className="w-4 h-4" />
               </div>
             )}
@@ -134,7 +136,7 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
               }`}
             >
               {m.toolUsed && (
-                <div className="mb-2 flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 w-fit">
+                <div className="mb-2 flex items-center gap-1.5 text-[10px] text-[#700c20] dark:text-emerald-400 font-mono bg-[#f8edf0] dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-[#eadfe2] dark:border-emerald-800 w-fit">
                   <Database className="w-3 h-3" />
                   <span>Executed Tool: {m.toolUsed}()</span>
                 </div>
@@ -153,31 +155,29 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
 
         {loading && (
           <div className="flex gap-3 items-center text-xs text-zinc-500">
-            <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#700c20] flex items-center justify-center text-white shrink-0">
               <Bot className="w-4 h-4" />
             </div>
             <div className="bg-zinc-100 dark:bg-zinc-800 p-2.5 rounded-xl rounded-tl-none flex items-center gap-2">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#700c20]" />
               <span>Querying verified store records...</span>
             </div>
           </div>
         )}
       </CardContent>
 
-      {/* Suggested Quick Prompts */}
       <div className="px-4 py-2 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex gap-1.5 overflow-x-auto text-xs">
         {quickPrompts.map((p, idx) => (
           <button
             key={idx}
             onClick={() => sendMessage(p)}
-            className="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-emerald-500 hover:text-emerald-600 transition-colors text-[11px]"
+            className="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-[#700c20] hover:text-[#700c20] transition-colors text-[11px]"
           >
             {p}
           </button>
         ))}
       </div>
 
-      {/* Input Form */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -195,7 +195,7 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
         <Button
           type="submit"
           disabled={loading || !input.trim()}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 shrink-0"
+          className="bg-[#700c20] hover:bg-[#580918] text-white px-4 shrink-0"
         >
           <Send className="w-4 h-4" />
         </Button>

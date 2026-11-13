@@ -33,7 +33,7 @@ export function AuditLogsTable({ merchantId }: { merchantId: string }) {
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div>
           <CardTitle className="text-base flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <ShieldCheck className="w-4 h-4 text-[#700c20]" />
             AI Treasury Agent Audit Log
           </CardTitle>
           <CardDescription className="text-xs">
@@ -93,7 +93,7 @@ export function AuditLogsTable({ merchantId }: { merchantId: string }) {
                         href={`https://sepolia.basescan.org/tx/${log.txHash}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-semibold"
+                        className="inline-flex items-center gap-1 text-[#700c20] hover:text-[#580918] font-semibold"
                       >
                         <span>{log.txHash.slice(0, 8)}...{log.txHash.slice(-4)}</span>
                         <ExternalLink className="w-3 h-3" />

@@ -84,7 +84,7 @@ export function TreasuryAgentView({
           <CardHeader className="pb-3">
             <div className="flex justify-between items-start">
               <Badge variant="success" className="text-xs">Scenario 1: Approved</Badge>
-              <span className="font-mono font-bold text-emerald-600 text-sm">$100.00 USDC</span>
+              <span className="font-mono font-bold text-[#700c20] text-sm">$100.00 USDC</span>
             </div>
             <CardTitle className="text-base text-zinc-900 dark:text-zinc-50 pt-1">
               Authorized Supplier Settlement
@@ -103,7 +103,7 @@ export function TreasuryAgentView({
             <Button
               onClick={() => runScenario('SCENARIO_1')}
               disabled={running}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs mt-2"
+              className="w-full bg-[#700c20] hover:bg-[#580918] text-white text-xs mt-2"
             >
               {running && activeScenario === 'SCENARIO_1' ? (
                 <>
@@ -179,7 +179,7 @@ export function TreasuryAgentView({
               </CardDescription>
             </div>
             {result.executedOnChain ? (
-              <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+              <div className="flex items-center gap-1.5 text-xs text-[#700c20] font-medium">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>On-Chain Settlement Confirmed</span>
               </div>
@@ -230,7 +230,7 @@ export function TreasuryAgentView({
                 : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200'
             }`}>
               <div className="font-semibold text-sm flex items-center gap-2">
-                {result.executedOnChain ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <XCircle className="w-4 h-4 text-rose-600" />}
+                {result.executedOnChain ? <CheckCircle2 className="w-4 h-4 text-[#700c20]" /> : <XCircle className="w-4 h-4 text-rose-600" />}
                 <span>Formal Decision: {result.decision}</span>
               </div>
               <p>{result.reason}</p>
@@ -257,3 +257,4 @@ export function TreasuryAgentView({
     </div>
   );
 }
+

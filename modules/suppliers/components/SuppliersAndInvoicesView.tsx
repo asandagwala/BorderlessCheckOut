@@ -112,7 +112,7 @@ export function SuppliersAndInvoicesView({ merchantId, onRunInvoicePayment }: Su
   if (loading) {
     return (
       <div className="p-8 text-center text-xs text-zinc-500 flex items-center justify-center gap-2">
-        <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+        <Loader2 className="w-4 h-4 animate-spin text-[#700c20]" />
         <span>Loading supplier & invoice registry...</span>
       </div>
     );
@@ -125,14 +125,14 @@ export function SuppliersAndInvoicesView({ merchantId, onRunInvoicePayment }: Su
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-emerald-600" />
+              <Building2 className="w-4 h-4 text-[#700c20]" />
               Approved Suppliers & Vendors
             </CardTitle>
             <CardDescription className="text-xs">
               Treasury policy mandates payments can only be disbursed to APPROVED vendors
             </CardDescription>
           </div>
-          <Button size="sm" onClick={() => setShowAddSupplier(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
+          <Button size="sm" onClick={() => setShowAddSupplier(true)} className="bg-[#700c20] hover:bg-[#580918] text-white text-xs">
             <Plus className="w-3.5 h-3.5 mr-1" /> Add Supplier
           </Button>
         </CardHeader>
@@ -175,7 +175,7 @@ export function SuppliersAndInvoicesView({ merchantId, onRunInvoicePayment }: Su
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="w-4 h-4 text-emerald-600" />
+              <FileText className="w-4 h-4 text-[#700c20]" />
               Outstanding & Settled Supplier Invoices
             </CardTitle>
             <CardDescription className="text-xs">
@@ -230,13 +230,13 @@ export function SuppliersAndInvoicesView({ merchantId, onRunInvoicePayment }: Su
                           <Button
                             size="xs"
                             onClick={() => onRunInvoicePayment(inv.id)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px]"
+                            className="bg-[#700c20] hover:bg-[#580918] text-white text-[10px]"
                           >
                             <Play className="w-3 h-3 mr-1" /> Dispatch Agent
                           </Button>
                         )}
                         {inv.paymentStatus === 'PAID' && (
-                          <span className="text-emerald-600 text-[11px] font-medium flex items-center justify-end gap-1">
+                          <span className="text-[#700c20] text-[11px] font-medium flex items-center justify-end gap-1">
                             <CheckCircle className="w-3.5 h-3.5" /> Settled
                           </span>
                         )}
@@ -285,7 +285,7 @@ export function SuppliersAndInvoicesView({ merchantId, onRunInvoicePayment }: Su
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <Button type="button" variant="outline" size="sm" onClick={() => setShowAddSupplier(false)}>Cancel</Button>
-                  <Button type="submit" size="sm" className="bg-emerald-600 text-white">Save Supplier</Button>
+                  <Button type="submit" size="sm" className="bg-[#700c20] text-white">Save Supplier</Button>
                 </div>
               </form>
             </CardContent>
@@ -325,7 +325,7 @@ export function SuppliersAndInvoicesView({ merchantId, onRunInvoicePayment }: Su
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <Button type="button" variant="outline" size="sm" onClick={() => setShowAddInvoice(false)}>Cancel</Button>
-                  <Button type="submit" size="sm" className="bg-emerald-600 text-white">Create Invoice</Button>
+                  <Button type="submit" size="sm" className="bg-[#700c20] text-white">Create Invoice</Button>
                 </div>
               </form>
             </CardContent>
@@ -335,3 +335,4 @@ export function SuppliersAndInvoicesView({ merchantId, onRunInvoicePayment }: Su
     </div>
   );
 }
+

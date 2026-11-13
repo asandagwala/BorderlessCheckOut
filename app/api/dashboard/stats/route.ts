@@ -13,7 +13,9 @@ export async function GET(request: Request) {
   const policy = await db.getPolicyByMerchantId(merchantId);
 
   const paidOrders = orders.filter(o => o.paymentStatus === 'PAID');
-  const unpaidOrders = orders.filter(o => o.paymentStatus === 'PENDING' || o.paymentStatus === 'CONFIRMING');
+  const pendingOrders = orders.filter(o => o.paymentStatus === 'PENDING' || o.paymentStatus === 'CONFIRMING');
+  const expiredOrders = orders.filter(o => o.paymentStatus === 'EXPIRED');
+  const sumUsdc = (items: typeof orders) => items.reduce((total, order) => total + Number(order.usdcAmount), 0);
 
   return NextResponse.json({
     merchant,
@@ -23,11 +25,17 @@ export async function GET(request: Request) {
       indicativeZarValue: balance.indicativeZarValue,
       totalDisbursedUsdc: balance.totalDisbursedUsdc,
       paidOrdersCount: paidOrders.length,
-      unpaidOrdersCount: unpaidOrders.length,
+      unpaidOrdersCount: pendingOrders.length,
       totalOrdersCount: orders.length,
       spendingLimit: policy?.spendingLimit || 500.00,
     },
+    orderSummary: {
+      paid: { count: paidOrders.length, usdcTotal: sumUsdc(paidOrders) },
+      pending: { count: pendingOrders.length, usdcTotal: sumUsdc(pendingOrders) },
+      expired: { count: expiredOrders.length, usdcTotal: sumUsdc(expiredOrders) },
+    },
     recentTransactions: transactions.slice(0, 8),
     recentOrders: orders.slice(0, 8),
+    allOrders: orders,
   });
 }

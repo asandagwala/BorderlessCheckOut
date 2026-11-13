@@ -10,6 +10,19 @@ const proposalSchema = z.object({
   riskFlags: z.array(z.string().min(1).max(200)).max(5),
 });
 
+const proposalJsonSchema = {
+  type: 'OBJECT',
+  properties: {
+    recommendation: {
+      type: 'STRING',
+      enum: ['PROPOSE_PAYMENT', 'HOLD', 'NEEDS_HUMAN_REVIEW'],
+    },
+    rationale: { type: 'STRING' },
+    riskFlags: { type: 'ARRAY', items: { type: 'STRING' } },
+  },
+  required: ['recommendation', 'rationale', 'riskFlags'],
+};
+
 const GEMINI_SYSTEM_INSTRUCTION = `You are a cautious supplier-invoice proposal assistant for Borderless Checkout.
 Return only JSON with exactly these fields:
 {"recommendation":"PROPOSE_PAYMENT|HOLD|NEEDS_HUMAN_REVIEW","rationale":"...","riskFlags":["..."]}
@@ -95,11 +108,13 @@ export class GeminiProposalService {
           contents: [{ role: 'user', parts: [{ text: JSON.stringify(facts) }] }],
           generationConfig: {
             responseMimeType: 'application/json',
+            responseSchema: proposalJsonSchema,
+            thinkingConfig: { thinkingLevel: 'MINIMAL' },
             temperature: 0.2,
-            maxOutputTokens: 300,
+            maxOutputTokens: 512,
           },
         }),
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(45_000),
       }
     );
 

@@ -7,13 +7,14 @@ import {
   TreasuryPolicy, 
   AgentAuditLog 
 } from './types';
+import { ENV } from '@/lib/env';
 
 export const SEED_MERCHANTS: Merchant[] = [
   {
     id: 'merch_kigali_01',
     businessName: 'Kigali Fresh Market Ltd',
     email: 'merchant@kigalifresh.rw',
-    walletAddress: '0x89D24A6b4CcB1B6fAA2625fE562bDD9a23260359',
+    walletAddress: ENV.MERCHANT_WALLET_ADDRESS,
     createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -47,7 +48,7 @@ export const SEED_ORDERS: Order[] = [
     currency: 'ZAR',
     usdcAmount: 150.00,
     paymentReference: 'BC-ORD-KIGALI-002',
-    paymentStatus: 'PAID',
+    paymentStatus: 'PENDING',
     createdAt: new Date(Date.now() - 2 * 3600000).toISOString(), // 2 hours ago
   },
   {
@@ -58,7 +59,7 @@ export const SEED_ORDERS: Order[] = [
     currency: 'ZAR',
     usdcAmount: 250.00,
     paymentReference: 'BC-ORD-KIGALI-003',
-    paymentStatus: 'PAID',
+    paymentStatus: 'PENDING',
     createdAt: new Date(Date.now() - 24 * 3600000).toISOString(), // 1 day ago
   },
   {
@@ -84,7 +85,7 @@ export const SEED_TRANSACTIONS: Transaction[] = [
     senderAddress: '0x5380540dC9Ccf4f0521eD5cEa5C53896568205C9',
     recipientAddress: '0x89D24A6b4CcB1B6fAA2625fE562bDD9a23260359',
     amount: 150.00,
-    verificationStatus: 'VERIFIED',
+    verificationStatus: 'FAILED',
     type: 'CUSTOMER_PAYMENT',
     blockNumber: 19827364,
     timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
@@ -98,7 +99,7 @@ export const SEED_TRANSACTIONS: Transaction[] = [
     senderAddress: '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B',
     recipientAddress: '0x89D24A6b4CcB1B6fAA2625fE562bDD9a23260359',
     amount: 250.00,
-    verificationStatus: 'VERIFIED',
+    verificationStatus: 'FAILED',
     type: 'CUSTOMER_PAYMENT',
     blockNumber: 19782103,
     timestamp: new Date(Date.now() - 24 * 3600000).toISOString(),

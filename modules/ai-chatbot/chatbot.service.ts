@@ -276,7 +276,7 @@ export class ChatbotService {
       const data = await this.executeTool(merchantId, 'get_recent_transactions', { limit: 5 });
       const list = data.transactions.map((t: any) => `• **${t.type === 'CUSTOMER_PAYMENT' ? 'Received' : 'Payout'}**: $${t.amount.toFixed(2)} USDC | Tx: \`${t.txHash.slice(0, 10)}...${t.txHash.slice(-6)}\` | ${new Date(t.timestamp).toLocaleTimeString()}`).join('\n');
       return {
-        response: `Here are your recent Base Sepolia transactions:\n\n${list}\n\nAll verified on-chain via USDC contract.`,
+          response: `Here are your recent recorded transactions:\n\n${list}\n\nTransaction status reflects the reconciled ledger; use the explorer link to inspect the on-chain receipt.`,
         toolUsed: 'get_recent_transactions',
         toolResult: data,
       };

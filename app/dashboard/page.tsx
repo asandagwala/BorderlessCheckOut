@@ -10,6 +10,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { OrdersTable } from '@/modules/dashboard/components/OrdersTable';
 import { TransactionsTable } from '@/modules/dashboard/components/TransactionsTable';
 import { CreateOrderModal } from '@/modules/dashboard/components/CreateOrderModal';
@@ -28,6 +29,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [walletDraft, setWalletDraft] = useState('');
+  const [savingWallet, setSavingWallet] = useState(false);
+  const [walletSaveMessage, setWalletSaveMessage] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
     try {
@@ -50,6 +54,7 @@ export default function DashboardPage() {
 
   const stats = statsData?.stats;
   const orderSummary = statsData?.orderSummary;
+  const merchant = statsData?.merchant;
   const tabs = [
     { id: 'overview', label: 'Overview', icon: TrendingUp },
     { id: 'orders', label: 'Customer Orders', icon: ShoppingBag },
@@ -58,6 +63,27 @@ export default function DashboardPage() {
     { id: 'suppliers', label: 'Suppliers & Invoices', icon: FileText },
     { id: 'audit-logs', label: 'Audit Logs', icon: ShieldCheck },
   ] as const;
+
+  const saveMerchantWallet = async () => {
+    setSavingWallet(true);
+    setWalletSaveMessage(null);
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId, walletAddress: walletDraft || merchant?.walletAddress }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to save settlement wallet');
+      setWalletDraft(data.merchant.walletAddress);
+      setWalletSaveMessage('Settlement wallet saved. New checkout payments will use this address.');
+      await fetchDashboardData();
+    } catch (error) {
+      setWalletSaveMessage(error instanceof Error ? error.message : 'Unable to save settlement wallet');
+    } finally {
+      setSavingWallet(false);
+    }
+  };
 
   return (
     <main className="dashboard-page">
@@ -131,6 +157,34 @@ export default function DashboardPage() {
                 <p className="metric-foot">${(orderSummary?.pending?.usdcTotal ?? 0).toFixed(2)} USDC pending</p>
               </article>
             </div>
+
+            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Base Sepolia Settlement Wallet</CardTitle>
+                <CardDescription className="text-xs">
+                  Customer USDC transfers are sent to this merchant-controlled address.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  value={walletDraft || merchant?.walletAddress || ''}
+                  onChange={(event) => setWalletDraft(event.target.value)}
+                  placeholder="0x..."
+                  aria-label="Merchant settlement wallet address"
+                  className="font-mono text-xs"
+                />
+                <Button
+                  onClick={saveMerchantWallet}
+                  disabled={savingWallet || !(walletDraft || merchant?.walletAddress)}
+                  className="shrink-0 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {savingWallet ? 'Saving…' : 'Save wallet'}
+                </Button>
+              </CardContent>
+              {walletSaveMessage && (
+                <p className="px-6 pb-4 text-xs text-zinc-600 dark:text-zinc-300">{walletSaveMessage}</p>
+              )}
+            </Card>
 
             <section className="demo-banner">
               <div>

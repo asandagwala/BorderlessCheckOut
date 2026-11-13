@@ -20,6 +20,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { encodeFunctionData, getAddress, isAddress, parseUnits, zeroAddress } from 'viem';
+
+const erc20TransferAbi = [{
+  type: 'function',
+  name: 'transfer',
+  stateMutability: 'nonpayable',
+  inputs: [
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+  ],
+  outputs: [{ name: '', type: 'bool' }],
+}] as const;
 
 interface OrderData {
   id: string;
@@ -117,7 +129,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                   chainId: '0x14A34',
                   chainName: 'Base Sepolia',
                   nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                  rpcUrls: ['https://sepolia.base.org'],
+                  rpcUrls: ['https://sepolia.base.org', 'https://base-sepolia-rpc.publicnode.com'],
                   blockExplorerUrls: ['https://sepolia.basescan.org'],
                 }],
               });
@@ -129,15 +141,12 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
         setVerificationError(err.message || 'Failed to connect wallet');
       }
     } else {
-      // Browser wallet not found, enable simulated demo mode
-      setUserAccount('0xMockBrowserWallet491a2719b0274192');
-      setWalletConnected(true);
-      setWalletChainId(84532);
+      setVerificationError('A compatible browser wallet is required to submit a USDC payment.');
     }
   };
 
-  // Submit on-chain payment or demonstration transaction
-  const handlePayUsdc = async (simulated: boolean = false) => {
+  // Submit a real on-chain USDC transfer through the connected browser wallet.
+  const handlePayUsdc = async () => {
     if (!order || !merchant) return;
     setSubmittingPayment(true);
     setVerificationError(null);
@@ -145,28 +154,35 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
     let txHash: string | null = null;
 
     try {
-      if (!simulated && typeof window !== 'undefined' && (window as any).ethereum && walletConnected) {
-        // Execute real transfer on Base Sepolia
-        const ethereum = (window as any).ethereum;
-        const usdcAddress = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
-        // ERC20 transfer(address to, uint256 value) selector is 0xa9059cbb
-        const toClean = merchant.walletAddress.replace('0x', '').padStart(64, '0');
-        // USDC has 6 decimals
-        const amountUnits = BigInt(Math.round(order.usdcAmount * 1_000_000)).toString(16).padStart(64, '0');
-        const data = `0xa9059cbb${toClean}${amountUnits}`;
-
-        txHash = await ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: userAccount,
-            to: usdcAddress,
-            data,
-          }],
-        });
-      } else {
-        // Generate simulated testnet transaction hash for immediate review
-        txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+      if (typeof window === 'undefined' || !(window as any).ethereum || !walletConnected || !userAccount) {
+        throw new Error('Connect a compatible wallet before submitting payment.');
       }
+      if (walletChainId !== 84532) {
+        throw new Error('Switch your wallet to Base Sepolia (chain ID 84532) before paying.');
+      }
+
+      if (!isAddress(merchant.walletAddress)) {
+        throw new Error('The merchant settlement wallet is invalid. Payment was not submitted.');
+      }
+
+      const recipient = getAddress(merchant.walletAddress);
+      if (recipient.toLowerCase() === zeroAddress) {
+        throw new Error('The merchant settlement wallet cannot be the zero address. Payment was not submitted.');
+      }
+
+      const ethereum = (window as any).ethereum;
+      const usdcAddress = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+      const amountUnits = parseUnits(order.usdcAmount.toString(), 6);
+      const data = encodeFunctionData({
+        abi: erc20TransferAbi,
+        functionName: 'transfer',
+        args: [recipient, amountUnits],
+      });
+
+      txHash = await ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: userAccount, to: usdcAddress, data, value: '0x0' }],
+      });
 
       setConfirmedTxHash(txHash);
       setVerifyingOnChain(true);
@@ -178,7 +194,6 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
         body: JSON.stringify({
           orderId: order.id,
           txHash,
-          simulated: simulated || !((window as any).ethereum),
         }),
       });
 
@@ -430,7 +445,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                     {/* QR Code */}
                     <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 text-center">
                       <QRCodeSVG
-                        value={`ethereum:${merchant.walletAddress}@84532/transfer?address=0x036CbD53842c5426634e7929541eC2318f3dCF7e&uint256=${Math.round(order.usdcAmount * 1_000_000)}`}
+                        value={`ethereum:0x036CbD53842c5426634e7929541eC2318f3dCF7e@84532/transfer?address=${merchant.walletAddress}&uint256=${parseUnits(order.usdcAmount.toString(), 6).toString()}`}
                         size={140}
                         level="M"
                       />
@@ -467,7 +482,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                   {/* Step 3: Payment Buttons */}
                   <div className="space-y-2 pt-2">
                     <Button
-                      onClick={() => handlePayUsdc(false)}
+                      onClick={handlePayUsdc}
                       disabled={submittingPayment || verifyingOnChain || !walletConnected}
                       className="w-full bg-[#700c20] hover:bg-[#580918] text-white font-medium py-5 shadow-sm text-sm"
                     >
@@ -486,16 +501,6 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                       )}
                     </Button>
 
-                    {/* Demonstration 1-click testnet payment for evaluators without testnet gas */}
-                    <div className="text-center pt-2">
-                      <button
-                        onClick={() => handlePayUsdc(true)}
-                        disabled={submittingPayment || verifyingOnChain}
-                        className="text-xs text-zinc-500 hover:text-[#700c20] underline cursor-pointer"
-                      >
-                        ⚡ Fast-track Demo: Simulate Verified Testnet Payment (No Wallet Required)
-                      </button>
-                    </div>
                   </div>
                 </div>
               )}

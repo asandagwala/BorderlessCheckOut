@@ -89,7 +89,7 @@ export const agentAuditLogs = pgTable('agent_audit_logs', {
   supplier: text('supplier'),
   policyDecision: varchar('policy_decision', { length: 30 }).notNull(), // APPROVED, REJECTED, REQUIRES_APPROVAL
   policyReason: text('policy_reason'),
-  executionStatus: varchar('execution_status', { length: 30 }).notNull(), // EXECUTED, BLOCKED, PENDING_APPROVAL, FAILED
+  executionStatus: varchar('execution_status', { length: 30 }).notNull(), // SUBMITTED, EXECUTED, BLOCKED, PENDING_APPROVAL, FAILED
   txHash: text('tx_hash'),
   timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow().notNull(),
 });

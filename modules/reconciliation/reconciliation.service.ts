@@ -1,6 +1,6 @@
 import { db } from '@/lib/database/db';
 import { BlockchainPaymentVerifier } from '@/modules/blockchain/verifier.service';
-import { Order, Transaction } from '@/lib/database/types';
+import { Transaction } from '@/lib/database/types';
 import { CHAIN_CONFIG } from '@/modules/blockchain/config';
 
 export interface ReconciliationResult {
@@ -20,8 +20,7 @@ export class ReconciliationService {
    */
   static async reconcileOrderPayment(
     orderId: string,
-    txHash: string,
-    simulatedMode: boolean = false
+    txHash: string
   ): Promise<ReconciliationResult> {
     const order = await db.getOrderById(orderId);
     if (!order) {
@@ -96,27 +95,13 @@ export class ReconciliationService {
       };
     }
 
-    let verification;
-
-    if (simulatedMode) {
-      // In simulated testing mode (for demo without real gas faucet delay)
-      verification = {
-        verified: true,
-        txHash,
-        senderAddress: '0xSimulatedCustomerWallet00000000000000001',
-        recipientAddress: merchant.walletAddress,
-        amount: order.usdcAmount,
-        blockNumber: 19854210,
-        tokenContract: CHAIN_CONFIG.usdcContractAddress,
-      };
-    } else {
-      // Verify against Base Sepolia RPC
-      verification = await BlockchainPaymentVerifier.verifyPayment(
-        txHash as `0x${string}`,
-        merchant.walletAddress,
-        order.usdcAmount
-      );
-    }
+    // Every settlement must be backed by a mined Base Sepolia receipt. There is no
+    // simulation bypass in the reconciliation boundary.
+    const verification = await BlockchainPaymentVerifier.verifyPayment(
+      txHash as `0x${string}`,
+      merchant.walletAddress,
+      order.usdcAmount
+    );
 
     if (!verification.verified) {
       // Mark as failed in order if fatal or keep pending for retry

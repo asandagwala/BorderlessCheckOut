@@ -131,6 +131,21 @@ export const db = {
     return merchant;
   },
 
+  async updateMerchantWalletAddress(id: string, walletAddress: string): Promise<Merchant | null> {
+    if (drizzleDb) {
+      await drizzleDb.update(schema.merchants)
+        .set({ walletAddress, updatedAt: new Date() })
+        .where(eq(schema.merchants.id, id));
+    }
+
+    const existing = await this.getMerchantById(id);
+    if (!existing) return null;
+
+    const updated = { ...existing, walletAddress, updatedAt: new Date().toISOString() };
+    memoryStore.merchants.set(id, updated);
+    return updated;
+  },
+
   // Orders repository
   async getOrderById(id: string): Promise<Order | null> {
     if (drizzleDb) {

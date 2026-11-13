@@ -2,9 +2,17 @@ import { NextResponse } from 'next/server';
 import { TreasuryAgentService } from '@/modules/ai-treasury-agent/treasury-agent.service';
 import { GeminiProposalService } from '@/modules/ai-treasury-agent/gemini-proposal.service';
 import { treasuryAgentActionSchema } from '@/lib/validations';
+import { ENV } from '@/lib/env';
 
 export async function POST(request: Request) {
   try {
+    if (ENV.TREASURY_EXECUTION_ENABLED) {
+      const suppliedKey = request.headers.get('x-treasury-execution-key');
+      if (!ENV.TREASURY_EXECUTION_API_KEY || suppliedKey !== ENV.TREASURY_EXECUTION_API_KEY) {
+        return NextResponse.json({ error: 'Treasury execution requires server-side authorization.' }, { status: 403 });
+      }
+    }
+
     const json = await request.json();
     const result = treasuryAgentActionSchema.safeParse(json);
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
-import { createMerchantInputSchema, getMerchantQuerySchema } from '@/lib/validations';
+import { createMerchantInputSchema, getMerchantQuerySchema, updateMerchantWalletInputSchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -57,6 +57,24 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ merchant: newMerchant, isNew: true }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const result = updateMerchantWalletInputSchema.safeParse(await request.json());
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
+    }
+
+    const merchant = await db.updateMerchantWalletAddress(result.data.merchantId, result.data.walletAddress);
+    if (!merchant) {
+      return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ merchant });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

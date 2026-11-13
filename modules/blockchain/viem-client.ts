@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, http } from 'viem';
+import { createPublicClient, createWalletClient, fallback, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { CHAIN_CONFIG } from './config';
 import { ENV } from '@/lib/env';
@@ -6,7 +6,10 @@ import { ENV } from '@/lib/env';
 // Public RPC Client for reading Base Sepolia blockchain data
 export const publicClient = createPublicClient({
   chain: CHAIN_CONFIG.chain,
-  transport: http(CHAIN_CONFIG.rpcUrl),
+  transport: fallback([
+    http(CHAIN_CONFIG.rpcUrl),
+    http(ENV.BASE_SEPOLIA_RPC_FALLBACK_URL),
+  ]),
 });
 
 // Optional backend wallet signer for autonomous treasury payments
@@ -19,7 +22,10 @@ export function getTreasuryWalletClient() {
     const client = createWalletClient({
       account,
       chain: CHAIN_CONFIG.chain,
-      transport: http(CHAIN_CONFIG.rpcUrl),
+      transport: fallback([
+        http(CHAIN_CONFIG.rpcUrl),
+        http(ENV.BASE_SEPOLIA_RPC_FALLBACK_URL),
+      ]),
     });
     return { client, account };
   } catch (err) {

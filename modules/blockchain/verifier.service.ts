@@ -13,6 +13,8 @@ export interface VerificationResult {
   tokenContract?: string;
 }
 
+type ReceiptClient = Pick<typeof publicClient, 'waitForTransactionReceipt'>;
+
 export class BlockchainPaymentVerifier {
   /**
    * Verifies an on-chain USDC transfer on Base Sepolia testnet.
@@ -26,7 +28,8 @@ export class BlockchainPaymentVerifier {
   static async verifyPayment(
     txHash: `0x${string}`,
     expectedRecipient: string,
-    expectedUsdcAmount: number
+    expectedUsdcAmount: number,
+    receiptClient: ReceiptClient = publicClient
   ): Promise<VerificationResult> {
     try {
       if (!txHash || !txHash.startsWith('0x') || txHash.length !== 66) {
@@ -37,12 +40,15 @@ export class BlockchainPaymentVerifier {
         };
       }
 
-      // Query on-chain receipt from Base Sepolia
+      // Wait for a mined Base Sepolia receipt rather than trusting a wallet submission hash.
       let receipt;
       try {
-        receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+        receipt = await receiptClient.waitForTransactionReceipt({
+          hash: txHash,
+          confirmations: 1,
+          timeout: 60_000,
+        });
       } catch (err: any) {
-        // If the transaction is very recent, it might not be indexed yet, or might be simulated
         return {
           verified: false,
           txHash,
@@ -68,10 +74,8 @@ export class BlockchainPaymentVerifier {
 
       // Check logs for official USDC contract Transfer event
       const usdcAddressLower = CHAIN_CONFIG.usdcContractAddress.toLowerCase();
-      let transferFound = false;
-      let sender = '';
-      let recipient = '';
-      let amountUnits = BigInt(0);
+      const expectedUnits = parseUnits(expectedUsdcAmount.toString(), CHAIN_CONFIG.usdcDecimals);
+      let matchingTransfer: { sender: string; recipient: string; amountUnits: bigint } | null = null;
 
       for (const log of receipt.logs) {
         if (log.address.toLowerCase() === usdcAddressLower) {
@@ -84,11 +88,16 @@ export class BlockchainPaymentVerifier {
             });
 
             if (decoded.eventName === 'Transfer') {
-              sender = decoded.args.from;
-              recipient = decoded.args.to;
-              amountUnits = decoded.args.value;
-              transferFound = true;
-              break;
+              const sender = decoded.args.from;
+              const recipient = decoded.args.to;
+              const amountUnits = decoded.args.value;
+              if (
+                recipient.toLowerCase() === expectedRecipient.toLowerCase() &&
+                amountUnits === expectedUnits
+              ) {
+                matchingTransfer = { sender, recipient, amountUnits };
+                break;
+              }
             }
           } catch {
             // Not a transfer event on this log, continue
@@ -96,47 +105,20 @@ export class BlockchainPaymentVerifier {
         }
       }
 
-      if (!transferFound) {
+      if (!matchingTransfer) {
         return {
           verified: false,
           txHash,
-          error: `No USDC Transfer event found from contract ${CHAIN_CONFIG.usdcContractAddress}.`,
-        };
-      }
-
-      // Validate recipient address
-      if (recipient.toLowerCase() !== expectedRecipient.toLowerCase()) {
-        return {
-          verified: false,
-          txHash,
-          senderAddress: sender,
-          recipientAddress: recipient,
-          error: `Recipient mismatch. Expected ${expectedRecipient}, but USDC was sent to ${recipient}.`,
-        };
-      }
-
-      // Validate amount (USDC has 6 decimals)
-      const expectedUnits = parseUnits(expectedUsdcAmount.toString(), CHAIN_CONFIG.usdcDecimals);
-      // Strict amount check with 0.1% tolerance for micro-rounding if applicable
-      const parsedAmount = Number(formatUnits(amountUnits, CHAIN_CONFIG.usdcDecimals));
-
-      if (amountUnits < expectedUnits) {
-        return {
-          verified: false,
-          txHash,
-          senderAddress: sender,
-          recipientAddress: recipient,
-          amount: parsedAmount,
-          error: `Underpayment: expected ${expectedUsdcAmount} USDC, but received ${parsedAmount} USDC.`,
+          error: `No exact USDC transfer of ${expectedUsdcAmount} to ${expectedRecipient} found on Base Sepolia.`,
         };
       }
 
       return {
         verified: true,
         txHash,
-        senderAddress: sender,
-        recipientAddress: recipient,
-        amount: parsedAmount,
+        senderAddress: matchingTransfer.sender,
+        recipientAddress: matchingTransfer.recipient,
+        amount: Number(formatUnits(matchingTransfer.amountUnits, CHAIN_CONFIG.usdcDecimals)),
         blockNumber: Number(receipt.blockNumber),
         tokenContract: CHAIN_CONFIG.usdcContractAddress,
       };

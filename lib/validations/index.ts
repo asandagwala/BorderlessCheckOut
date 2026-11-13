@@ -7,6 +7,11 @@ export const createMerchantInputSchema = z.object({
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Must be a valid EVM wallet address (0x...)'),
 });
 
+export const updateMerchantWalletInputSchema = z.object({
+  merchantId: z.string().min(1, 'merchantId is required'),
+  walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Must be a valid EVM wallet address (0x...)'),
+});
+
 export const getMerchantQuerySchema = z.object({
   email: z.string().email().optional(),
   id: z.string().min(1).optional(),
@@ -28,7 +33,6 @@ export const getOrdersQuerySchema = z.object({
 export const verifyPaymentInputSchema = z.object({
   orderId: z.string().min(1, 'orderId is required'),
   txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'txHash must be a valid 32-byte hex string (0x...)'),
-  simulated: z.boolean().optional().default(false),
 });
 
 // AI Chatbot Schema
@@ -82,6 +86,7 @@ export const updatePolicyInputSchema = z.object({
 });
 
 export type CreateMerchantInput = z.infer<typeof createMerchantInputSchema>;
+export type UpdateMerchantWalletInput = z.infer<typeof updateMerchantWalletInputSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderInputSchema>;
 export type VerifyPaymentInput = z.infer<typeof verifyPaymentInputSchema>;
 export type ChatMessageInput = z.infer<typeof chatMessageInputSchema>;

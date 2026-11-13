@@ -122,9 +122,11 @@ Key environment variables:
 ```env
 # Blockchain
 NEXT_PUBLIC_BASE_SEPOLIA_RPC=https://sepolia.base.org
+NEXT_PUBLIC_BASE_SEPOLIA_RPC_FALLBACK=https://base-sepolia-rpc.publicnode.com
 NEXT_PUBLIC_BASE_CHAIN_ID=84532
 NEXT_PUBLIC_USDC_CONTRACT=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 NEXT_PUBLIC_BLOCK_EXPLORER=https://sepolia.basescan.org
+MERCHANT_WALLET_ADDRESS=0xA8f73eb996C58688240474D442C1D467f7171D58
 
 # Optional Gemini API key for AI Treasury Agent proposals
 GEMINI_API_KEY=your_gemini_api_key
@@ -132,6 +134,14 @@ GEMINI_MODEL=gemini-3.6-flash
 
 # Optional Claude API key for the merchant chatbot
 ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Treasury execution is disabled by default. Enable only for a Base Sepolia-only
+# test wallet funded with test ETH and Base Sepolia USDC; never use a mainnet key.
+TREASURY_EXECUTION_ENABLED=false
+TREASURY_PRIVATE_KEY=
+# Server-side authorization for the treasury execution API. Do not expose this
+# value to the browser, the AI model, or source control.
+TREASURY_EXECUTION_API_KEY=
 
 # Database (Drizzle ORM with PostgreSQL / Supabase)
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/borderless_checkout

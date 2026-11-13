@@ -116,8 +116,8 @@ export class PolicyEngine {
     if (threshold && invoiceAmount > threshold) {
       return {
         decision: 'REQUIRES_APPROVAL',
-        isAllowed: true, // can be authorized with human sign-off
-        reason: `Invoice amount $${invoiceAmount.toFixed(2)} is within spending limit of $${spendingLimit.toFixed(2)}, but exceeds human dual-control threshold of $${threshold.toFixed(2)}. Dual approval granted for demo.`,
+        isAllowed: false,
+        reason: `Invoice amount $${invoiceAmount.toFixed(2)} is within spending limit of $${spendingLimit.toFixed(2)}, but exceeds the human dual-control threshold of $${threshold.toFixed(2)}. Execution is blocked until an explicit approval workflow is implemented.`,
         policy,
         supplier,
         invoice,

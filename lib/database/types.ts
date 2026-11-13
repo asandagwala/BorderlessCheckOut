@@ -7,7 +7,7 @@ export type TransactionType = 'CUSTOMER_PAYMENT' | 'SUPPLIER_PAYOUT';
 export type ApprovalStatus = 'APPROVED' | 'PENDING' | 'BLOCKED';
 export type InvoiceStatus = 'PENDING' | 'PAID' | 'REJECTED' | 'APPROVAL_REQUIRED';
 export type PolicyDecision = 'APPROVED' | 'REJECTED' | 'REQUIRES_APPROVAL';
-export type ExecutionStatus = 'EXECUTED' | 'BLOCKED' | 'PENDING_APPROVAL' | 'FAILED';
+export type ExecutionStatus = 'SUBMITTED' | 'EXECUTED' | 'BLOCKED' | 'PENDING_APPROVAL' | 'FAILED';
 
 export interface Merchant {
   id: string;

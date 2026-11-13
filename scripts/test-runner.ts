@@ -3,9 +3,10 @@ import { ReconciliationService } from '../modules/reconciliation/reconciliation.
 import { PolicyEngine } from '../modules/treasury/policy-engine.service';
 import { TreasuryService } from '../modules/treasury/treasury.service';
 import { ChatbotService } from '../modules/ai-chatbot/chatbot.service';
-import { CHAIN_CONFIG } from '../modules/blockchain/config';
-import { getUsdcAmountMismatch } from '../modules/blockchain/verifier.service';
-import { getTreasuryWalletClient } from '../modules/blockchain/viem-client';
+import { encodeAbiParameters, encodeEventTopics, parseUnits } from 'viem';
+import { CHAIN_CONFIG, ERC20_ABI } from '../modules/blockchain/config';
+import { BlockchainPaymentVerifier, getUsdcAmountMismatch } from '../modules/blockchain/verifier.service';
+import { getTreasuryWalletClient, publicClient } from '../modules/blockchain/viem-client';
 
 async function runTests() {
   if (CHAIN_CONFIG.chain.id !== 84532 || CHAIN_CONFIG.chainId !== CHAIN_CONFIG.chain.id) {
@@ -43,11 +44,97 @@ async function runTests() {
   if (!order) throw new Error('Order lookup failed');
   console.log('  Initial order status:', order.paymentStatus);
 
-  const testTxHash = '0x' + 'a1b2c3d4e5f6'.repeat(5) + '1234';
+  const testTxHash = ('0x' + 'a1b2c3d4e5f6'.repeat(5) + '1234') as `0x${string}`;
+  const testSender = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' as const;
+  const expectedUnits = parseUnits(order.usdcAmount.toFixed(2), CHAIN_CONFIG.usdcDecimals);
+  const exactTransferTopics = encodeEventTopics({
+    abi: ERC20_ABI,
+    eventName: 'Transfer',
+    args: { from: testSender, to: merchant.walletAddress.toLowerCase() as `0x${string}` },
+  });
+  const mockReceipt = {
+    status: 'success' as const,
+    blockNumber: BigInt(19854210),
+    logs: [{
+      address: CHAIN_CONFIG.usdcContractAddress,
+      topics: exactTransferTopics,
+      data: encodeAbiParameters([{ type: 'uint256' }], [expectedUnits]),
+    }],
+  };
+  const mockReceiptClient = {
+    getTransactionReceipt: async () => mockReceipt,
+  } as unknown as Pick<typeof publicClient, 'getTransactionReceipt'>;
+  const verifyMockedBaseReceipt = (
+    hash: `0x${string}`,
+    recipient: string,
+    amount: number
+  ) => BlockchainPaymentVerifier.verifyPayment(hash, recipient, amount, mockReceiptClient);
+
+  const exactReceiptResult = await verifyMockedBaseReceipt(testTxHash, merchant.walletAddress, order.usdcAmount);
+  if (!exactReceiptResult.verified || exactReceiptResult.amount !== order.usdcAmount) {
+    throw new Error(`A successful exact USDC receipt should verify: ${exactReceiptResult.error || 'amount mismatch'}`);
+  }
+  const wrongRecipientResult = await verifyMockedBaseReceipt(
+    testTxHash,
+    '0x2546BcD3c84621e976D8185a91A922aE77ECEc30',
+    order.usdcAmount
+  );
+  if (wrongRecipientResult.verified) throw new Error('A transfer to another wallet must not verify');
+  const wrongTokenReceiptClient = {
+    getTransactionReceipt: async () => ({
+      ...mockReceipt,
+      logs: [{ ...mockReceipt.logs[0], address: '0x0000000000000000000000000000000000000001' }],
+    }),
+  } as unknown as Pick<typeof publicClient, 'getTransactionReceipt'>;
+  const wrongTokenResult = await BlockchainPaymentVerifier.verifyPayment(
+    testTxHash,
+    merchant.walletAddress,
+    order.usdcAmount,
+    wrongTokenReceiptClient
+  );
+  if (wrongTokenResult.verified) throw new Error('A transfer from a different token contract must not verify');
+
+  const revertedReceiptClient = {
+    getTransactionReceipt: async () => ({ ...mockReceipt, status: 'reverted' as const }),
+  } as unknown as Pick<typeof publicClient, 'getTransactionReceipt'>;
+  const revertedResult = await BlockchainPaymentVerifier.verifyPayment(
+    testTxHash,
+    merchant.walletAddress,
+    order.usdcAmount,
+    revertedReceiptClient
+  );
+  if (revertedResult.verified) throw new Error('A reverted blockchain transaction must not verify');
+
+  const overpaymentReceipt = {
+    ...mockReceipt,
+    logs: [{
+      ...mockReceipt.logs[0],
+      data: encodeAbiParameters([{ type: 'uint256' }], [expectedUnits + BigInt(1)]),
+    }],
+  };
+  const overpaymentReceiptClient = {
+    getTransactionReceipt: async () => overpaymentReceipt,
+  } as unknown as Pick<typeof publicClient, 'getTransactionReceipt'>;
+  const overpaymentReceiptResult = await BlockchainPaymentVerifier.verifyPayment(
+    testTxHash,
+    merchant.walletAddress,
+    order.usdcAmount,
+    overpaymentReceiptClient
+  );
+  if (overpaymentReceiptResult.verified || !overpaymentReceiptResult.error?.startsWith('Overpayment')) {
+    throw new Error('The receipt verifier must reject on-chain overpayments');
+  }
+  console.log('  ✓ Receipt decoder verifies the USDC contract, merchant recipient, and exact amount.');
+
+  const verifyPaymentWithMockReceipt = (
+    hash: `0x${string}`,
+    recipient: string,
+    amount: number
+  ) => BlockchainPaymentVerifier.verifyPayment(hash, recipient, amount, mockReceiptClient);
   const reconResult = await ReconciliationService.reconcileOrderPayment(
     order.id,
     testTxHash,
-    true // simulated mode
+    verifyPaymentWithMockReceipt
   );
   console.log('  Reconciliation outcome:', reconResult.orderStatus, '-', reconResult.message);
   if (reconResult.orderStatus !== 'PAID') throw new Error('Order reconciliation failed');
@@ -55,13 +142,23 @@ async function runTests() {
 
   // Test 2b: Duplicate Transaction Prevention
   console.log('\nTest 2b: Duplicate Transaction Prevention...');
+  const duplicateOrder = await db.createOrder({
+    ...order,
+    id: 'ord_test_duplicate_payment',
+    customerReference: 'CUST-DUPLICATE-TEST',
+    paymentReference: 'BC-DUPLICATE-TEST',
+    paymentStatus: 'PENDING',
+    createdAt: new Date().toISOString(),
+  });
   const dupResult = await ReconciliationService.reconcileOrderPayment(
-    'ord_sample_expired_04',
-    testTxHash, // same txHash!
-    true
+    duplicateOrder.id,
+    testTxHash,
+    verifyPaymentWithMockReceipt
   );
-  if (dupResult.success) throw new Error('Duplicate tx should have been rejected');
-  console.log('  ✓ Duplicate transaction prevented:', dupResult.message);
+  if (dupResult.success || dupResult.error !== 'DUPLICATE_TRANSACTION') {
+    throw new Error('A verified transaction hash must not be reused for another order');
+  }
+  console.log('  ✓ Duplicate verified transaction blocked from a second pending order.');
 
   // Test 3: AI Merchant Chatbot Tools
   console.log('\nTest 3: AI Merchant Chatbot Tool Calling...');

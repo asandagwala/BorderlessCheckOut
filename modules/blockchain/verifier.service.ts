@@ -35,7 +35,8 @@ export class BlockchainPaymentVerifier {
   static async verifyPayment(
     txHash: `0x${string}`,
     expectedRecipient: string,
-    expectedUsdcAmount: number
+    expectedUsdcAmount: number,
+    receiptClient: Pick<typeof publicClient, 'getTransactionReceipt'> = publicClient
   ): Promise<VerificationResult> {
     try {
       if (!txHash || !txHash.startsWith('0x') || txHash.length !== 66) {
@@ -49,7 +50,7 @@ export class BlockchainPaymentVerifier {
       // Query on-chain receipt from Base Sepolia
       let receipt;
       try {
-        receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+        receipt = await receiptClient.getTransactionReceipt({ hash: txHash });
       } catch (err: any) {
         // If the transaction is very recent, it might not be indexed yet, or might be simulated
         return {

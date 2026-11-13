@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,11 +16,16 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
     try {
       const res = await fetch(`/api/auth?email=${encodeURIComponent(email)}`);
       const data = await res.json();
-      if (data.merchant) router.push('/dashboard');
-      else setError('Merchant account not found. Please register or check your email.');
+
+      if (data.merchant) {
+        router.push('/dashboard');
+      } else {
+        setError('Merchant account not found. Please register or check your email.');
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -28,34 +34,90 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="auth-page">
-      <div className="auth-wrap">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-[#700c20] mb-6"><ArrowLeft size={16}/> Back to Borderless Checkout</Link>
-        <div className="auth-brand">
-          <span className="brand-mark">BC</span>
-          <span><strong className="block text-xl font-black" style={{fontFamily:'var(--font-montserrat)'}}>Borderless Checkout</strong><span className="text-xs text-[#756d6f]">Merchant workspace</span></span>
-        </div>
-        <section className="auth-card">
-          <div className="mb-7">
-            <p className="text-xs uppercase tracking-[.16em] text-[#700c20] font-bold mb-2">Welcome back</p>
-            <h1>Sign in to your store</h1>
-            <p className="text-sm text-[#756d6f] mt-2">Access your orders, payments and treasury activity.</p>
+    <div className="min-h-screen bg-[#fff3e2] text-zinc-900 flex flex-col justify-center items-center p-4 selection:bg-[#700c20] selection:text-white">
+      <div className="max-w-md w-full space-y-6">
+        <Link href="/dashboard" className="block text-center space-y-2 cursor-pointer group">
+          <div className="w-12 h-12 rounded-[14px] bg-[#700c20] flex items-center justify-center text-white font-black text-xl mx-auto shadow-md transition-transform group-hover:scale-105">
+            BC
           </div>
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div><label htmlFor="email">Merchant email address</label><input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@company.com" required/></div>
-            {error && <p role="alert" className="rounded-xl bg-rose-50 text-rose-700 p-3 text-sm">{error}</p>}
-            <button className="auth-submit" type="submit" disabled={loading}>{loading ? <Loader2 className="inline mr-2 animate-spin" size={17}/> : <ShieldCheck className="inline mr-2" size={17}/>}Sign in to dashboard</button>
+          <h1 className="text-2xl sm:text-3xl font-black font-montserrat-extrabold text-zinc-950">
+            Merchant Portal Login
+          </h1>
+          <p className="text-xs font-play text-zinc-600">Access your store orders, treasury, and AI assistant</p>
+        </Link>
+
+        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-8 shadow-xl space-y-6">
+          <div className="border-b border-[#700c20]/20 pb-4">
+            <h2 className="font-montserrat-extrabold text-lg text-zinc-950">Sign In</h2>
+            <p className="text-xs font-play text-zinc-500 mt-0.5">
+              Enter your registered merchant email to authenticate
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="text-xs font-play font-bold text-zinc-700 block mb-1">
+                Merchant Email Address
+              </label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                required
+                className="bg-[#fff3e2]/50 border-2 border-[#700c20] rounded-[20px] text-xs font-play h-11 px-4"
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 bg-rose-50 text-rose-800 border border-rose-300 text-xs font-play rounded-[18px]">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-sm flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Authenticating...</span>
+                </>
+              ) : (
+                <span>Sign In to Merchant Dashboard</span>
+              )}
+            </button>
           </form>
-          <div className="mt-6 border-t border-[#eadfe2] pt-5">
-            <p className="text-xs text-[#756d6f] font-bold mb-3">Demo merchant accounts</p>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setEmail('merchant@kigalifresh.rw')} className="rounded-full border border-[#eadfe2] px-3 py-2 text-xs hover:bg-[#f8edf0] hover:text-[#700c20]">Kigali Fresh Market</button>
-              <button type="button" onClick={() => setEmail('finance@capeartisans.co.za')} className="rounded-full border border-[#eadfe2] px-3 py-2 text-xs hover:bg-[#f8edf0] hover:text-[#700c20]">Cape Artisans</button>
+
+          <div className="pt-4 border-t border-[#700c20]/20 text-center space-y-2">
+            <span className="text-xs font-play text-zinc-500 block">Preset Demo Merchants:</span>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEmail('merchant@kigalifresh.rw')}
+                className="px-3 py-1 text-[11px] font-play font-bold rounded-full bg-[#fff3e2] text-[#700c20] border border-[#700c20] hover:bg-[#700c20] hover:text-white transition-colors cursor-pointer"
+              >
+                Kigali Fresh Market
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmail('finance@capeartisans.co.za')}
+                className="px-3 py-1 text-[11px] font-play font-bold rounded-full bg-[#fff3e2] text-[#700c20] border border-[#700c20] hover:bg-[#700c20] hover:text-white transition-colors cursor-pointer"
+              >
+                Cape Town Artisans
+              </button>
             </div>
           </div>
-          <p className="text-sm text-center text-[#756d6f] mt-6">New to Borderless Checkout? <Link href="/register" className="font-bold text-[#700c20]">Register your store</Link></p>
-        </section>
+        </div>
+
+        <div className="text-center">
+          <Link href="/register" className="text-xs font-play font-bold text-[#700c20] hover:underline">
+            Don&apos;t have a merchant account? Register Store
+          </Link>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -11,14 +11,9 @@ import {
   Copy, 
   Check, 
   ShieldCheck, 
-  Building2, 
-  RefreshCw,
   Coins,
   ArrowRight
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { encodeFunctionData, getAddress, isAddress, parseUnits, zeroAddress } from 'viem';
 
@@ -81,7 +76,6 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
       setOrder(data.order);
       setMerchant(data.merchant);
       if (data.order.paymentStatus === 'PAID') {
-        // If already paid, look up transaction
         const txRes = await fetch(`/api/dashboard/stats?merchantId=${data.order.merchantId}`);
         const txData = await txRes.json();
         const found = txData.recentTransactions?.find((t: any) => t.orderId === orderId);
@@ -112,16 +106,14 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
         setWalletChainId(chainId);
         setWalletConnected(true);
 
-        // Prompt switch to Base Sepolia if on another network
         if (chainId !== 84532) {
           try {
             await ethereum.request({
               method: 'wallet_switchEthereumChain',
-              params: [{ chainId: '0x14A34' }], // 84532 in hex
+              params: [{ chainId: '0x14A34' }],
             });
             setWalletChainId(84532);
           } catch (switchError: any) {
-            // Chain not added to user wallet, prompt add
             if (switchError.code === 4902) {
               await ethereum.request({
                 method: 'wallet_addEthereumChain',
@@ -145,49 +137,52 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
     }
   };
 
-  // Submit a real on-chain USDC transfer through the connected browser wallet.
   const handlePayUsdc = async () => {
     if (!order || !merchant) return;
     setSubmittingPayment(true);
     setVerificationError(null);
 
     let txHash: string | null = null;
-
     try {
-      if (typeof window === 'undefined' || !(window as any).ethereum || !walletConnected || !userAccount) {
-        throw new Error('Connect a compatible wallet before submitting payment.');
-      }
-      if (walletChainId !== 84532) {
-        throw new Error('Switch your wallet to Base Sepolia (chain ID 84532) before paying.');
-      }
-
-      if (!isAddress(merchant.walletAddress)) {
-        throw new Error('The merchant settlement wallet is invalid. Payment was not submitted.');
-      }
-
-      const recipient = getAddress(merchant.walletAddress);
-      if (recipient.toLowerCase() === zeroAddress) {
-        throw new Error('The merchant settlement wallet cannot be the zero address. Payment was not submitted.');
+      if (typeof window === 'undefined' || !(window as any).ethereum) {
+        throw new Error('No web3 provider detected. Connect a browser wallet to submit a Base Sepolia transaction.');
       }
 
       const ethereum = (window as any).ethereum;
-      const usdcAddress = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      const currentSender = accounts[0];
+      if (!currentSender) throw new Error('Please connect your web3 wallet first.');
+
+      const chainIdHex = await ethereum.request({ method: 'eth_chainId' });
+      if (parseInt(chainIdHex, 16) !== 84532) {
+        throw new Error('Please switch network to Base Sepolia (Chain ID 84532).');
+      }
+
+      if (!isAddress(merchant.walletAddress) || getAddress(merchant.walletAddress) === zeroAddress) {
+        throw new Error('Merchant settlement wallet is not configured on Base Sepolia.');
+      }
+
+      const usdcContractAddress = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
       const amountUnits = parseUnits(order.usdcAmount.toString(), 6);
       const data = encodeFunctionData({
         abi: erc20TransferAbi,
         functionName: 'transfer',
-        args: [recipient, amountUnits],
+        args: [getAddress(merchant.walletAddress), amountUnits],
       });
 
       txHash = await ethereum.request({
         method: 'eth_sendTransaction',
-        params: [{ from: userAccount, to: usdcAddress, data, value: '0x0' }],
+        params: [{
+          from: currentSender,
+          to: usdcContractAddress,
+          data,
+          value: '0x0',
+        }],
       });
 
-      setConfirmedTxHash(txHash);
+      setSubmittingPayment(false);
       setVerifyingOnChain(true);
 
-      // Backend verification & automatic reconciliation
       const verifyRes = await fetch('/api/checkout/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -198,15 +193,15 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
       });
 
       const verifyData = await verifyRes.json();
-
-      if (!verifyRes.ok || !verifyData.success) {
-        throw new Error(verifyData.message || verifyData.error || 'Backend verification failed.');
+      if (!verifyRes.ok) {
+        throw new Error(verifyData.error || 'Payment verification failed on Base Sepolia.');
       }
 
-      // Re-fetch order state
+      setConfirmedTxHash(txHash);
       await fetchOrder();
     } catch (err: any) {
-      setVerificationError(err.message || 'Payment execution or verification failed.');
+      console.error('Payment execution error:', err);
+      setVerificationError(err.message || 'Payment execution failed');
     } finally {
       setSubmittingPayment(false);
       setVerifyingOnChain(false);
@@ -226,10 +221,10 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#fff3e2] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-[#700c20]" />
-          <p className="text-sm font-medium text-zinc-600">Loading secure checkout...</p>
+          <p className="text-sm font-play font-bold text-zinc-700">Loading secure checkout...</p>
         </div>
       </div>
     );
@@ -237,21 +232,19 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
 
   if (error || !order || !merchant) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-rose-200 shadow-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2 text-rose-600">
-              <AlertCircle className="w-5 h-5" />
-              <CardTitle>Checkout Error</CardTitle>
-            </div>
-            <CardDescription>{error || 'Requested order could not be located.'}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/dashboard">
-              <Button variant="outline" className="w-full">Return to Dashboard</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#fff3e2] flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-[35px] border-[5px] border-[#700c20] bg-white p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h2 className="font-montserrat-extrabold text-xl text-zinc-950">Checkout Unavailable</h2>
+          <p className="text-xs font-play text-zinc-600">{error || 'This order does not exist or has expired.'}</p>
+          <Link href="/dashboard" className="inline-block mt-4">
+            <button className="px-6 py-2.5 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs">
+              Return to Dashboard
+            </button>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -259,213 +252,201 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
   const isPaid = order.paymentStatus === 'PAID';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 flex flex-col justify-between p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#fff3e2] text-zinc-900 flex flex-col justify-between p-4 sm:p-6 lg:p-8 selection:bg-[#700c20] selection:text-white">
       {/* Top Header */}
-      <header className="max-w-4xl mx-auto w-full flex items-center justify-between pb-6 border-b border-zinc-200 dark:border-zinc-800 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#700c20] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+      <header className="max-w-5xl mx-auto w-full flex items-center justify-between pb-6 border-b-2 border-[#700c20]/20 mb-8">
+        <Link href="/dashboard" className="flex items-center gap-3.5 group cursor-pointer" title="Return to Dashboard">
+          <div className="w-11 h-11 rounded-[14px] bg-[#700c20] flex items-center justify-center text-white font-black text-lg shadow-sm transition-transform group-hover:scale-105">
             BC
           </div>
           <div>
-            <h1 className="font-semibold text-zinc-900 dark:text-zinc-50 text-base">Borderless Checkout</h1>
-            <p className="text-xs text-zinc-500">Base Sepolia • USDC Stablecoin Gateway</p>
+            <div className="flex items-center gap-2">
+              <span className="font-montserrat-extrabold text-lg sm:text-xl tracking-tight text-zinc-950">
+                Borderless Checkout
+              </span>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#700c20]/10 text-[#700c20] border border-[#700c20]/30 font-play">
+                Base Sepolia
+              </span>
+            </div>
+            <p className="text-xs text-zinc-600 font-play">Official Circle USDC Gateway (6 Decimals)</p>
           </div>
-        </div>
+        </Link>
+
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 border-emerald-200 text-xs py-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5 animate-pulse" />
-            Base Sepolia (84532)
-          </Badge>
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="text-xs text-zinc-600">
-              Merchant Dashboard
-            </Button>
-          </Link>
+          <ShieldCheck className="w-5 h-5 text-emerald-600" />
+          <span className="text-xs font-play font-bold text-zinc-700 hidden sm:inline">
+            Smart Contract Verified
+          </span>
         </div>
       </header>
 
       {/* Main Checkout Container */}
-      <main className="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-6 my-auto">
+      <main className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-8 my-auto">
         {/* Left Column: Store & Order Summary */}
-        <div className="md:col-span-5 flex flex-col gap-4">
-          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium uppercase tracking-wider">
-                <Building2 className="w-4 h-4 text-[#700c20]" />
+        <div className="md:col-span-5 flex flex-col gap-6">
+          <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="border-b border-[#700c20]/20 pb-4">
+              <span className="text-[11px] font-montserrat-extrabold uppercase tracking-wider text-[#700c20] block mb-1">
                 Merchant Store
-              </div>
-              <CardTitle className="text-xl text-zinc-900 dark:text-zinc-50">
+              </span>
+              <h2 className="font-montserrat-extrabold text-2xl text-zinc-950 tracking-tight">
                 {merchant.businessName}
-              </CardTitle>
-              <CardDescription className="text-xs">
+              </h2>
+              <p className="text-xs font-play text-zinc-500 mt-0.5">
                 Verified African SME Merchant • {merchant.email}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-0 text-sm border-t border-zinc-100 dark:border-zinc-800/60 mt-2">
-              <div className="pt-4 flex justify-between items-center text-zinc-600 dark:text-zinc-400">
-                <span>Customer Ref</span>
-                <span className="font-mono font-medium text-zinc-900 dark:text-zinc-100">{order.customerReference}</span>
+              </p>
+            </div>
+
+            <div className="space-y-3 font-play text-xs sm:text-sm">
+              <div className="flex justify-between items-center text-zinc-600">
+                <span>Customer Ref:</span>
+                <span className="font-mono font-bold text-zinc-900">{order.customerReference}</span>
               </div>
-              <div className="flex justify-between items-center text-zinc-600 dark:text-zinc-400">
-                <span>Order Reference</span>
-                <div className="flex items-center gap-1.5 font-mono font-medium text-zinc-900 dark:text-zinc-100">
+              <div className="flex justify-between items-center text-zinc-600">
+                <span>Order Reference:</span>
+                <div className="flex items-center gap-1.5 font-mono font-bold text-[#700c20]">
                   <span>{order.paymentReference}</span>
-                  <button onClick={() => copyToClipboard(order.paymentReference, 'ref')} className="text-zinc-400 hover:text-zinc-600">
-                    {copiedRef ? <Check className="w-3.5 h-3.5 text-[#700c20]" /> : <Copy className="w-3.5 h-3.5" />}
+                  <button onClick={() => copyToClipboard(order.paymentReference, 'ref')} className="hover:opacity-70 cursor-pointer">
+                    {copiedRef ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
-              <div className="flex justify-between items-center text-zinc-600 dark:text-zinc-400">
-                <span>Total Amount (ZAR)</span>
-                <span className="font-semibold text-zinc-900 dark:text-zinc-100">R {order.orderAmount.toFixed(2)} ZAR</span>
+              <div className="flex justify-between items-center text-zinc-600">
+                <span>Order Total (ZAR):</span>
+                <span className="font-medium text-zinc-800">R {order.orderAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center pt-3 border-t border-zinc-200 dark:border-zinc-800">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[#700c20] dark:text-emerald-400 block">
-                    USDC Due at Checkout
-                  </span>
-                  <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-                    ${order.usdcAmount.toFixed(2)} <span className="text-sm font-normal text-zinc-500">USDC</span>
-                  </span>
-                </div>
-                <Badge variant={isPaid ? "success" : "warning"} className="text-xs px-2.5 py-1">
-                  {order.paymentStatus}
-                </Badge>
-              </div>
-
-              {/* Indicative Rate Notice required by hackathon specification */}
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 rounded-lg text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                <span className="font-semibold">Indicative Exchange Rate:</span> 1 USDC ≈ R 18.50 ZAR.
-                <br />
-                <span className="italic text-amber-700 dark:text-amber-400">
-                  Clearly labeled as indicative for demonstration; not a live conversion or guaranteed settlement rate.
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Security & Verification Card */}
-          <Card className="border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/50 shadow-none text-xs text-zinc-500 p-4 space-y-2">
-            <div className="flex items-center gap-2 font-medium text-zinc-700 dark:text-zinc-300">
-              <ShieldCheck className="w-4 h-4 text-[#700c20]" />
-              Automated Blockchain Verification
             </div>
-            <p className="leading-relaxed">
-              Payments are verified directly on the Base Sepolia network via the official Circle USDC contract. No order is marked as paid without verified on-chain confirmation.
+
+            <div className="pt-4 border-t border-[#700c20]/20 flex justify-between items-baseline">
+              <span className="text-xs font-play font-bold text-zinc-700 uppercase tracking-wider">
+                Total Due:
+              </span>
+              <div className="text-right">
+                <span className="text-3xl font-black font-montserrat-extrabold text-[#700c20]">
+                  ${order.usdcAmount.toFixed(2)}
+                </span>
+                <span className="text-xs font-play font-bold text-zinc-600 ml-1.5">USDC</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Banner */}
+          <div className="p-4 rounded-[24px] bg-[#fff3e2] border-2 border-[#700c20]/30 flex items-center gap-3">
+            <Coins className="w-5 h-5 text-[#700c20] shrink-0" />
+            <p className="text-xs font-play text-zinc-700 leading-snug">
+              Payments are verified directly on Base Sepolia. Funds settle immediately to the merchant&apos;s wallet.
             </p>
-          </Card>
+          </div>
         </div>
 
-        {/* Right Column: Wallet Connection, QR Code & Payment Submission */}
+        {/* Right Column: Payment Actions & Status */}
         <div className="md:col-span-7">
-          <Card className="border-zinc-200 dark:border-zinc-800 shadow-md h-full flex flex-col justify-between">
-            <CardHeader className="pb-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-lg">Select USDC & Connect Wallet</CardTitle>
-                  <CardDescription className="text-xs">
-                    Pay instantly on Base Sepolia testnet using USDC
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                  <Coins className="w-3.5 h-3.5 text-blue-500" />
-                  Official USDC Testnet
-                </div>
-              </div>
-            </CardHeader>
+          <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-6 sm:p-8 shadow-sm">
+            <div className="pb-4 border-b border-[#700c20]/20 flex justify-between items-center mb-6">
+              <h3 className="font-montserrat-extrabold text-xl text-zinc-950">
+                Payment Verification
+              </h3>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold font-play uppercase tracking-wider ${
+                  isPaid
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}
+              >
+                {order.paymentStatus}
+              </span>
+            </div>
 
-            <CardContent className="space-y-6 flex-1 flex flex-col justify-center">
+            <div className="space-y-6">
               {isPaid ? (
-                /* Payment Success View */
-                <div className="py-8 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-[#700c20] dark:text-emerald-400 ring-8 ring-emerald-50 dark:ring-emerald-950/30">
-                    <CheckCircle2 className="w-10 h-10" />
+                <div className="text-center py-6 space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 border-2 border-emerald-300 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-9 h-9" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Payment Verified & Settled!</h3>
-                    <p className="text-sm text-zinc-500 mt-1 max-w-sm">
-                      Your payment of <span className="font-semibold text-zinc-900 dark:text-zinc-100">${order.usdcAmount.toFixed(2)} USDC</span> was successfully confirmed on Base Sepolia.
+                    <h3 className="font-montserrat-extrabold text-2xl text-zinc-950">
+                      Payment Successfully Verified!
+                    </h3>
+                    <p className="text-xs font-play text-zinc-600 mt-1 max-w-sm mx-auto">
+                      On-chain Transfer event was decoded and reconciled on Base Sepolia.
                     </p>
                   </div>
 
                   {confirmedTxHash && (
-                    <div className="w-full max-w-md p-3.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-zinc-200 dark:border-zinc-700 text-left space-y-1.5">
-                      <div className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Blockchain Transaction Hash</div>
-                      <div className="font-mono text-xs text-zinc-800 dark:text-zinc-200 truncate select-all">
-                        {confirmedTxHash}
-                      </div>
+                    <div className="pt-2">
                       <a
                         href={`https://sepolia.basescan.org/tx/${confirmedTxHash}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-[#700c20] hover:text-[#580918] pt-1"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#fff3e2] border border-[#700c20]/30 text-xs font-mono font-bold text-[#700c20] hover:underline"
                       >
-                        View on BaseScan Sepolia <ExternalLink className="w-3 h-3" />
+                        <span>Tx: {confirmedTxHash.slice(0, 10)}...{confirmedTxHash.slice(-8)}</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   )}
 
-                  <div className="pt-4 flex gap-3">
+                  <div className="pt-4">
                     <Link href="/dashboard">
-                      <Button className="bg-[#700c20] hover:bg-[#580918] text-white">
-                        Return to Store Dashboard <ArrowRight className="w-4 h-4 ml-1.5" />
-                      </Button>
+                      <button className="px-6 py-3 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] transition-all cursor-pointer">
+                        Return to Dashboard
+                      </button>
                     </Link>
                   </div>
                 </div>
               ) : (
-                /* Unpaid / Active Checkout Flow */
                 <div className="space-y-6">
                   {/* Step 1: Wallet Connection */}
-                  <div className="p-4 bg-zinc-50 dark:bg-zinc-800/40 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-[#700c20]" />
-                        1. Connect Wallet
+                  <div className="p-4 bg-[#fff3e2] rounded-[24px] border-2 border-[#700c20]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span className="text-xs font-play font-bold uppercase tracking-wider text-zinc-900 flex items-center gap-2">
+                      <Wallet className="w-4 h-4 text-[#700c20]" />
+                      <span>1. Connect Browser Wallet</span>
+                    </span>
+                    {walletConnected ? (
+                      <span className="px-3 py-1 rounded-full text-[11px] font-bold font-mono bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        {userAccount?.slice(0, 6)}...{userAccount?.slice(-4)}
                       </span>
-                      {walletConnected ? (
-                        <Badge variant="success" className="text-[11px]">
-                          Connected: {userAccount?.slice(0, 6)}...{userAccount?.slice(-4)}
-                        </Badge>
-                      ) : (
-                        <Button size="sm" onClick={connectWallet} className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs">
-                          Connect Wallet
-                        </Button>
-                      )}
-                    </div>
-                    {walletConnected && walletChainId !== 84532 && (
-                      <p className="text-xs text-amber-600">
-                        Please ensure your wallet is switched to Base Sepolia (Chain ID 84532).
-                      </p>
+                    ) : (
+                      <button
+                        onClick={connectWallet}
+                        className="px-4 py-2 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] transition-all cursor-pointer shadow-xs"
+                      >
+                        Connect Wallet
+                      </button>
                     )}
                   </div>
+                  {walletConnected && walletChainId !== 84532 && (
+                    <p className="text-xs font-play text-rose-700">
+                      Please switch your connected wallet to Base Sepolia (Chain ID 84532).
+                    </p>
+                  )}
 
                   {/* Step 2: Payment Details & QR Code */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                     {/* QR Code */}
-                    <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 text-center">
+                    <div className="flex flex-col items-center justify-center p-4 bg-[#fff3e2] rounded-[24px] border-2 border-[#700c20]/30 text-center">
                       <QRCodeSVG
                         value={`ethereum:0x036CbD53842c5426634e7929541eC2318f3dCF7e@84532/transfer?address=${merchant.walletAddress}&uint256=${parseUnits(order.usdcAmount.toString(), 6).toString()}`}
-                        size={140}
+                        size={135}
                         level="M"
                       />
-                      <span className="text-[10px] text-zinc-400 mt-2">Scan with compatible mobile crypto wallet</span>
+                      <span className="text-[10px] font-play text-zinc-500 mt-2">Scan with mobile web3 wallet</span>
                     </div>
 
                     {/* Merchant Wallet Info */}
-                    <div className="space-y-2 text-xs">
+                    <div className="space-y-3 text-xs font-play">
                       <div>
-                        <span className="text-zinc-500 block">Merchant Recipient Address:</span>
-                        <div className="flex items-center gap-1 font-mono text-[11px] text-zinc-900 dark:text-zinc-100 mt-0.5 bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded">
-                          <span className="truncate">{merchant.walletAddress}</span>
-                          <button onClick={() => copyToClipboard(merchant.walletAddress, 'address')} className="text-zinc-400 hover:text-zinc-600 shrink-0">
-                            {copiedAddress ? <Check className="w-3.5 h-3.5 text-[#700c20]" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span className="text-zinc-600 block mb-1">Merchant Settlement Address:</span>
+                        <div className="flex items-center gap-1 font-mono text-[11px] text-zinc-900 bg-[#fff3e2] p-2 rounded-[14px] border border-[#700c20]/30">
+                          <span className="truncate flex-1">{merchant.walletAddress}</span>
+                          <button onClick={() => copyToClipboard(merchant.walletAddress, 'address')} className="text-[#700c20] hover:opacity-70 cursor-pointer">
+                            {copiedAddress ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </div>
                       <div>
-                        <span className="text-zinc-500 block">USDC Testnet Token Contract:</span>
-                        <div className="font-mono text-[11px] text-zinc-700 dark:text-zinc-300 truncate bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded">
+                        <span className="text-zinc-600 block mb-1">Circle USDC Token Contract:</span>
+                        <div className="font-mono text-[11px] text-zinc-800 truncate bg-[#fff3e2] p-2 rounded-[14px] border border-[#700c20]/30">
                           0x036CbD53842c5426634e7929541eC2318f3dCF7e
                         </div>
                       </div>
@@ -473,44 +454,43 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                   </div>
 
                   {verificationError && (
-                    <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-700 dark:text-rose-300 text-xs rounded-lg flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="p-3.5 bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs font-play rounded-[20px] flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                       <span>{verificationError}</span>
                     </div>
                   )}
 
                   {/* Step 3: Payment Buttons */}
-                  <div className="space-y-2 pt-2">
-                    <Button
+                  <div className="pt-2">
+                    <button
                       onClick={handlePayUsdc}
                       disabled={submittingPayment || verifyingOnChain || !walletConnected}
-                      className="w-full bg-[#700c20] hover:bg-[#580918] text-white font-medium py-5 shadow-sm text-sm"
+                      className="w-full py-4 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-sm uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
                     >
                       {submittingPayment ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Awaiting Wallet Confirmation...
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Awaiting Wallet Signature...</span>
                         </>
                       ) : verifyingOnChain ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Verifying On-Chain via Base Sepolia RPC...
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Verifying On-Chain via Base Sepolia RPC...</span>
                         </>
                       ) : (
                         `Approve & Pay $${order.usdcAmount.toFixed(2)} USDC`
                       )}
-                    </Button>
-
+                    </button>
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="max-w-4xl mx-auto w-full text-center text-xs text-zinc-400 pt-6">
+      <footer className="max-w-5xl mx-auto w-full text-center text-xs font-play text-zinc-600 pt-8">
         Borderless Checkout • Node Engine Hackathon 2026 • Base Sepolia Chain ID 84532
       </footer>
     </div>
@@ -521,10 +501,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#fff3e2] flex items-center justify-center p-4">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-[#700c20]" />
-            <p className="text-sm font-medium text-zinc-600">Loading secure checkout...</p>
+            <p className="text-sm font-play font-bold text-zinc-700">Loading secure checkout...</p>
           </div>
         </div>
       }
@@ -533,4 +513,3 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
     </Suspense>
   );
 }
-

@@ -1,18 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
-  Cpu, 
   ShieldCheck, 
-  ShieldAlert, 
   CheckCircle2, 
   XCircle, 
   ExternalLink, 
   Loader2, 
   Play, 
+  Cpu,
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 import type { TreasuryAgentRunResult } from '../treasury-agent.service';
 import type { GeminiProposalResponse } from '../gemini-proposal.service';
@@ -80,262 +78,314 @@ export function TreasuryAgentView({
     }
   };
 
+  const decision = result ? (result.decision || (result as any).policyDecision) : null;
+  const isApproved = decision === 'APPROVED';
+  const reasonText = result ? (result.reason || (result as any).policyReason || (result as any).summary) : '';
+
   return (
-    <div className="space-y-6">
-      {/* Top Banner / Explanation */}
-      <div className="p-4 bg-zinc-900 text-white rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-8">
+      {/* Top Banner / Test Bench Description */}
+      <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
         <div>
-          <div className="flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-semibold text-base">Autonomous AI Treasury Agent Test Bench</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <Cpu className="w-5 h-5 text-[#700c20]" />
+            <h2 className="font-montserrat-extrabold text-xl sm:text-2xl text-zinc-950 tracking-tight">
+              Autonomous AI Treasury Agent Test Bench
+            </h2>
           </div>
-          <p className="text-xs text-zinc-400 mt-1 max-w-2xl">
-            Gemini can analyze an invoice and return a structured payment proposal. The independent backend policy remains authoritative; proposal analysis does not submit a payment.
+          <p className="text-xs sm:text-sm font-play text-zinc-600 max-w-2xl">
+            Autonomous settlement agent governed by an independent policy engine. Gemini analyzes invoices and returns structured proposals, while policies strictly enforce a $500.00 USDC cap and approved supplier whitelists.
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Active Spending Limit: <strong className="text-emerald-400">$500.00 USDC</strong></span>
+        <div className="flex items-center gap-2 bg-[#fff3e2] px-4 py-2 rounded-full border-2 border-[#700c20]/20 text-xs font-play shrink-0">
+          <ShieldCheck className="w-4 h-4 text-[#700c20]" />
+          <span>Spending Limit: <strong className="text-[#700c20] font-bold">$500.00 USDC</strong></span>
         </div>
       </div>
 
       {/* Two Scenario Trigger Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Scenario 1 Card */}
-        <Card className="border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/20 dark:bg-emerald-950/10">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-start">
-              <Badge variant="success" className="text-xs">Scenario 1: Approved</Badge>
-              <span className="font-mono font-bold text-[#700c20] text-sm">$100.00 USDC</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+        {/* Scenario 1 Card: Approved */}
+        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-lg">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="px-3 py-1 rounded-full text-xs font-bold font-play uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                Scenario 1: Approved
+              </span>
+              <span className="font-montserrat-extrabold text-xl font-black text-[#700c20]">
+                $100.00 USDC
+              </span>
             </div>
-            <CardTitle className="text-base text-zinc-900 dark:text-zinc-50 pt-1">
-              Authorized Supplier Settlement
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Supplier is approved (&quot;Cape Agro Packaging&quot;), balance is sufficient, and invoice ($100) is well within $500 spending limit.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
-              <li>✓ Vendor: Cape Agro Packaging Ltd (Status: APPROVED)</li>
-              <li>✓ Proposed Amount: $100.00 USDC (Limit: $500.00)</li>
-              <li>✓ Policy Engine: APPROVES</li>
-              <li>✓ Execution: Submitted to Base Sepolia testnet</li>
-            </ul>
-            <Button
+
+            <div>
+              <h3 className="font-montserrat-extrabold text-xl sm:text-2xl text-zinc-950 tracking-tight leading-snug">
+                Authorized Supplier Settlement
+              </h3>
+              <p className="text-xs sm:text-sm font-play text-zinc-600 mt-2 leading-relaxed">
+                Supplier is approved (&ldquo;Cape Agro Packaging&rdquo;), balance is sufficient, and invoice ($100) is well within $500 spending limit.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[20px] bg-[#fff3e2] border-2 border-[#700c20]/20 space-y-2 text-xs font-play text-zinc-800">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span><strong>Vendor:</strong> Cape Agro Packaging Ltd (Status: APPROVED)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span><strong>Proposed Amount:</strong> $100.00 USDC (Limit: $500.00)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span><strong>Policy Engine:</strong> APPROVES</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span><strong>Execution:</strong> Submitted to Base Sepolia testnet</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 space-y-3">
+            <button
               onClick={() => analyzeInvoice('inv_demo_approved_100')}
               disabled={Boolean(analyzingInvoiceId)}
-              variant="outline"
-              className="w-full text-xs mt-2"
+              className="w-full py-3 px-6 rounded-[35px] bg-[#fff3e2] text-[#700c20] border-2 border-[#700c20] font-play font-bold text-xs uppercase tracking-wider hover:bg-[#700c20] hover:text-white disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
             >
-              {analyzingInvoiceId === 'inv_demo_approved_100' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}
-            </Button>
-            <Button
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{analyzingInvoiceId === 'inv_demo_approved_100' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}</span>
+            </button>
+            <button
               onClick={() => runScenario('SCENARIO_1')}
               disabled={running}
-              className="w-full bg-[#700c20] hover:bg-[#580918] text-white text-xs mt-2"
+              className="w-full py-3.5 px-6 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
             >
               {running && activeScenario === 'SCENARIO_1' ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-                  Agent Executing Scenario 1...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Agent Executing Scenario 1...</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 mr-2" />
-                  Run Scenario 1 ($100 Approved)
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Run Scenario 1 ($100 Approved)</span>
                 </>
               )}
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
 
-        {/* Scenario 2 Card */}
-        <Card className="border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/10">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-start">
-              <Badge variant="destructive" className="text-xs">Scenario 2: Rejected</Badge>
-              <span className="font-mono font-bold text-rose-600 text-sm">$700.00 USDC</span>
+        {/* Scenario 2 Card: Rejected */}
+        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-lg">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="px-3 py-1 rounded-full text-xs font-bold font-play uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300">
+                Scenario 2: Rejected
+              </span>
+              <span className="font-montserrat-extrabold text-xl font-black text-[#700c20]">
+                $700.00 USDC
+              </span>
             </div>
-            <CardTitle className="text-base text-zinc-900 dark:text-zinc-50 pt-1">
-              Policy-Enforced Spending Cap Rejection
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Agent attempts to initiate payment for a $700 invoice. Independent policy engine blocks it ($700 &gt; $500 limit). No tx submitted!
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
-              <li>✓ Vendor: Nairobi Cold-Chain Logistics</li>
-              <li>✗ Proposed Amount: $700.00 USDC (Exceeds $500.00 limit)</li>
-              <li>✗ Policy Engine: REJECTED & BLOCKED</li>
-              <li>✗ Blockchain: No transaction submitted to network</li>
-            </ul>
-            <Button
+
+            <div>
+              <h3 className="font-montserrat-extrabold text-xl sm:text-2xl text-zinc-950 tracking-tight leading-snug">
+                Policy Limit Violation Guardrail
+              </h3>
+              <p className="text-xs sm:text-sm font-play text-zinc-600 mt-2 leading-relaxed">
+                Autonomous agent attempts payment of $700.00 for machinery maintenance. Independent policy engine blocks on-chain submission immediately.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[20px] bg-[#fff3e2] border-2 border-[#700c20]/20 space-y-2 text-xs font-play text-zinc-800">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-700 font-bold">✓</span>
+                <span><strong>Vendor:</strong> Kigali Cold Storage Ltd (Status: APPROVED)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-rose-700 font-bold">✕</span>
+                <span><strong>Proposed Amount:</strong> $700.00 USDC (Limit: $500.00)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-rose-700 font-bold">✕</span>
+                <span><strong>Policy Engine:</strong> REJECTS (Spending limit exceeded)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-rose-700 font-bold">✕</span>
+                <span><strong>Execution:</strong> BLOCKED (No blockchain tx submitted)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 space-y-3">
+            <button
               onClick={() => analyzeInvoice('inv_demo_rejected_700')}
               disabled={Boolean(analyzingInvoiceId)}
-              variant="outline"
-              className="w-full text-xs mt-2"
+              className="w-full py-3 px-6 rounded-[35px] bg-[#fff3e2] text-[#700c20] border-2 border-[#700c20] font-play font-bold text-xs uppercase tracking-wider hover:bg-[#700c20] hover:text-white disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
             >
-              {analyzingInvoiceId === 'inv_demo_rejected_700' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}
-            </Button>
-            <Button
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{analyzingInvoiceId === 'inv_demo_rejected_700' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}</span>
+            </button>
+            <button
               onClick={() => runScenario('SCENARIO_2')}
               disabled={running}
-              variant="destructive"
-              className="w-full text-xs mt-2"
+              className="w-full py-3.5 px-6 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
             >
               {running && activeScenario === 'SCENARIO_2' ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-                  Agent Evaluating Scenario 2...
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Agent Evaluating Policy Cap...</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 mr-2" />
-                  Run Scenario 2 ($700 Limit Exceeded)
+                  <Play className="w-4 h-4 fill-current text-white" />
+                  <span>Run Scenario 2 ($700 Limit Exceeded)</span>
                 </>
               )}
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {proposalError && (
-        <Card className="border-rose-300 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20">
-          <CardContent className="p-4 text-sm text-rose-700 dark:text-rose-300">
-            {proposalError}
-          </CardContent>
-        </Card>
-      )}
-
+      {/* Gemini Proposal Result Card */}
       {proposal && (
-        <Card className="border-sky-200 dark:border-sky-900/60">
-          <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800">
-            <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="text-base">Gemini Payment Proposal</CardTitle>
-              <Badge variant={proposal.recommendation === 'PROPOSE_PAYMENT' ? 'success' : 'destructive'}>
-                {proposal.recommendation.replaceAll('_', ' ')}
-              </Badge>
-              <Badge variant="outline">Policy: {proposal.policyDecision.replaceAll('_', ' ')}</Badge>
-            </div>
-            <CardDescription className="text-xs">
-              Invoice {proposal.invoiceNumber}: ${proposal.invoiceAmount.toFixed(2)} {proposal.currency} to {proposal.supplierName} ({proposal.supplierStatus}). Model: {proposal.model}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3 text-sm">
-            <p>{proposal.rationale}</p>
-            <div>
-              <p className="font-medium">Backend policy result</p>
-              <p className="text-muted-foreground">{proposal.policyReason}</p>
-            </div>
-            <div>
-              <p className="font-medium">Gemini risk flags</p>
-              {proposal.riskFlags.length > 0 ? (
-                <ul className="list-disc pl-5 text-muted-foreground">
-                  {proposal.riskFlags.map((flag, index) => <li key={`${index}-${flag}`}>{flag}</li>)}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground">Gemini reported no risk flags.</p>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">This is an AI recommendation only. No payment was submitted.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Live Agent Execution Trace View */}
-      {result && (
-        <Card className="border-zinc-200 dark:border-zinc-800 shadow-md animate-in fade-in duration-300">
-          <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800 flex flex-row items-center justify-between">
+        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#700c20]/20">
             <div>
               <div className="flex items-center gap-2">
-                <CardTitle className="text-base">Agent Reasoning & Policy Evaluation Trace</CardTitle>
-                <Badge variant={result.executedOnChain ? "success" : "destructive"}>
-                  {result.decision}
-                </Badge>
+                <Sparkles className="w-5 h-5 text-[#700c20]" />
+                <h3 className="font-montserrat-extrabold text-xl text-zinc-950">
+                  Gemini Proposal Analysis
+                </h3>
               </div>
-              <CardDescription className="text-xs mt-0.5">
-                Run ID: <span className="font-mono">{result.runId}</span> • Invoice: <span className="font-mono">${result.invoiceAmount.toFixed(2)} USDC</span> to {result.supplierName}
-              </CardDescription>
+              <p className="text-xs font-play text-zinc-600 mt-1">
+                Generated by {proposal.model} • Supplier: {proposal.supplierName} (${proposal.invoiceAmount.toFixed(2)} USDC)
+              </p>
             </div>
-            {result.executedOnChain ? (
-              <div className="flex items-center gap-1.5 text-xs text-[#700c20] font-medium">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>On-Chain Settlement Confirmed</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
-                <ShieldAlert className="w-4 h-4" />
-                <span>Policy Violation Blocked</span>
+            <span className="px-4 py-1.5 rounded-full text-xs font-bold font-play uppercase tracking-wider bg-[#700c20] text-white">
+              Action: {proposal.recommendation}
+            </span>
+          </div>
+
+          <div className="p-4 rounded-[20px] bg-[#fff3e2] border-2 border-[#700c20]/20 space-y-3 text-xs sm:text-sm font-play text-zinc-800">
+            <div>
+              <span className="font-bold block text-zinc-950 text-base font-montserrat">
+                Rationale & Analysis:
+              </span>
+              <p className="mt-1 text-zinc-700 leading-relaxed">{proposal.rationale}</p>
+            </div>
+
+            {proposal.riskFlags && proposal.riskFlags.length > 0 && (
+              <div className="pt-2 border-t border-[#700c20]/20 space-y-1">
+                <span className="text-xs font-bold text-zinc-950 block">Risk Evaluation Flags:</span>
+                <ul className="list-disc list-inside text-xs text-zinc-700 space-y-0.5">
+                  {proposal.riskFlags.map((flag, idx) => (
+                    <li key={idx}>{flag}</li>
+                  ))}
+                </ul>
               </div>
             )}
-          </CardHeader>
-          <CardContent className="p-4 space-y-4">
-            {/* Step Traces */}
-            <div className="space-y-2">
-              {result.traces.map((trace) => {
-                let badgeClass = "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300";
-                if (trace.status === 'success') badgeClass = "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
-                if (trace.status === 'warning') badgeClass = "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300";
-                if (trace.status === 'error') badgeClass = "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300";
 
-                return (
-                  <div
-                    key={trace.step}
-                    className="flex items-start gap-3 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800 text-xs bg-zinc-50/50 dark:bg-zinc-900/50"
-                  >
-                    <span className="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
-                      {trace.step}
-                    </span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-medium ${badgeClass}`}>
-                          {trace.action}
-                        </span>
-                        <span className="text-[10px] text-zinc-400">{trace.timestamp}</span>
-                      </div>
-                      <p className="mt-1 text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans">
-                        {trace.detail}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="pt-2 border-t border-[#700c20]/20 flex items-center justify-between text-xs font-bold">
+              <span>Policy Engine Alignment:</span>
+              <span className={proposal.policyDecision === 'APPROVED' ? 'text-emerald-700' : 'text-rose-700'}>
+                {proposal.policyDecision} ({proposal.policyReason})
+              </span>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Outcome Summary Box */}
-            <div className={`p-4 rounded-xl border text-xs leading-relaxed space-y-2 ${
-              result.executedOnChain 
-                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200' 
-                : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200'
-            }`}>
-              <div className="font-semibold text-sm flex items-center gap-2">
-                {result.executedOnChain ? <CheckCircle2 className="w-4 h-4 text-[#700c20]" /> : <XCircle className="w-4 h-4 text-rose-600" />}
-                <span>Formal Decision: {result.decision}</span>
-              </div>
-              <p>{result.reason}</p>
+      {proposalError && (
+        <div className="p-4 rounded-[24px] bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs font-play flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>{proposalError}</span>
+        </div>
+      )}
 
+      {/* Execution Results & Step Trace */}
+      {result && (
+        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 space-y-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#700c20]/20">
+            <div>
+              <h3 className="font-montserrat-extrabold text-xl text-zinc-950">
+                Agent Decision &amp; Verification Trace
+              </h3>
+              <p className="text-xs font-play text-zinc-600 mt-1">
+                Run ID: <span className="font-mono font-bold">{result.runId}</span> • Invoice: <span className="font-mono font-bold">${result.invoiceAmount?.toFixed(2)} USDC</span> to {result.supplierName}
+              </p>
+            </div>
+            <span
+              className={`px-4 py-1.5 rounded-full text-xs font-bold font-play uppercase tracking-wider ${
+                isApproved
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : 'bg-rose-100 text-rose-800 border border-rose-300'
+              }`}
+            >
+              Policy Decision: {decision}
+            </span>
+          </div>
+
+          {/* Outcome summary alert */}
+          <div
+            className={`p-5 rounded-[24px] border-2 flex items-start gap-3 ${
+              isApproved
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                : 'bg-rose-50 border-rose-300 text-rose-950'
+            }`}
+          >
+            {isApproved ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            ) : (
+              <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            )}
+            <div className="text-xs sm:text-sm font-play space-y-1">
+              <p className="font-bold">Formal Decision: {decision}</p>
+              <p className="text-zinc-600 leading-relaxed">{reasonText}</p>
               {result.txHash && (
-                <div className="pt-2 border-t border-emerald-200 dark:border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="font-mono text-[11px] truncate">
-                    Base Sepolia Tx Hash: <span className="font-semibold">{result.txHash}</span>
-                  </div>
+                <div className="pt-2">
                   <a
                     href={`https://sepolia.basescan.org/tx/${result.txHash}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300 hover:underline shrink-0"
+                    className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-[#700c20] hover:underline"
                   >
-                    View on BaseScan <ExternalLink className="w-3.5 h-3.5" />
+                    <span>View Base Sepolia Tx: {result.txHash.slice(0, 10)}...{result.txHash.slice(-6)}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          {/* Step traces */}
+          <div className="space-y-3 pt-2">
+            <h4 className="font-montserrat-extrabold text-sm uppercase tracking-wider text-zinc-900">
+              Audit Steps &amp; Reasoning Log
+            </h4>
+            <div className="space-y-2.5 font-play text-xs">
+              {(result.traces || (result as any).steps || []).map((st: any, i: number) => (
+                <div
+                  key={i}
+                  className="p-3.5 rounded-[18px] bg-[#fff3e2] border border-[#700c20]/20 flex items-start gap-3"
+                >
+                  <span className="w-6 h-6 rounded-full bg-[#700c20] text-white flex items-center justify-center shrink-0 font-bold text-[10px]">
+                    {st.step || i + 1}
+                  </span>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-zinc-950 uppercase tracking-wide text-[11px]">
+                        {st.action || st.step}
+                      </span>
+                      <span className="text-[10px] text-zinc-500">{st.timestamp}</span>
+                    </div>
+                    <p className="text-zinc-700 leading-relaxed">{st.detail || st.details}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
-

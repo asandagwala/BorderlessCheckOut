@@ -1,23 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import {
-  ArrowUpRight, Building2, CheckCircle2, Clock3, Coins, Cpu, FileText,
-  Plus, RefreshCw, ShieldCheck, ShoppingBag, TrendingUp, MessageCircle,
-  X, Wallet, AlertCircle
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { OrdersTable } from '@/modules/dashboard/components/OrdersTable';
 import { TransactionsTable } from '@/modules/dashboard/components/TransactionsTable';
 import { CreateOrderModal } from '@/modules/dashboard/components/CreateOrderModal';
-import { ChatbotView } from '@/modules/ai-chatbot/components/ChatbotView';
 import { TreasuryAgentView } from '@/modules/ai-treasury-agent/components/TreasuryAgentView';
 import { SuppliersAndInvoicesView } from '@/modules/suppliers/components/SuppliersAndInvoicesView';
 import { AuditLogsTable } from '@/modules/audit-logs/components/AuditLogsTable';
+import { FloatingChatbot } from '@/modules/ai-chatbot/components/FloatingChatbot';
+import Link from 'next/link';
 
 type TabType = 'overview' | 'orders' | 'transactions' | 'treasury-agent' | 'suppliers' | 'audit-logs';
 
@@ -28,11 +21,11 @@ export default function DashboardPage() {
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [chatbotOpen, setChatbotOpen] = useState(false);
   const [walletDraft, setWalletDraft] = useState('');
   const [savingWallet, setSavingWallet] = useState(false);
   const [walletSaveMessage, setWalletSaveMessage] = useState<string | null>(null);
 
+  // Fetch merchants and dashboard stats
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -40,29 +33,23 @@ export default function DashboardPage() {
         fetch(`/api/dashboard/stats?merchantId=${merchantId}`),
         fetch('/api/auth'),
       ]);
-      const [stats, merch] = await Promise.all([statsRes.json(), merchRes.json()]);
+      const stats = await statsRes.json();
+      const merch = await merchRes.json();
       setStatsData(stats);
       setMerchantsList(merch.merchants || []);
     } catch (err) {
-      console.error('Unable to refresh dashboard data', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchDashboardData(); }, [merchantId]);
+  useEffect(() => {
+    fetchDashboardData();
+  }, [merchantId]);
 
   const stats = statsData?.stats;
-  const orderSummary = statsData?.orderSummary;
   const merchant = statsData?.merchant;
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: TrendingUp },
-    { id: 'orders', label: 'Customer Orders', icon: ShoppingBag },
-    { id: 'transactions', label: 'Transactions', icon: Coins },
-    { id: 'treasury-agent', label: 'AI Treasury Agent', icon: Cpu },
-    { id: 'suppliers', label: 'Suppliers & Invoices', icon: FileText },
-    { id: 'audit-logs', label: 'Audit Logs', icon: ShieldCheck },
-  ] as const;
 
   const saveMerchantWallet = async () => {
     setSavingWallet(true);
@@ -85,142 +72,266 @@ export default function DashboardPage() {
     }
   };
 
+  const tabs: { id: TabType; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'orders', label: 'Customer Orders' },
+    { id: 'transactions', label: 'Transactions' },
+    { id: 'treasury-agent', label: 'AI Treasury Agent' },
+    { id: 'suppliers', label: 'Suppliers & Invoices' },
+    { id: 'audit-logs', label: 'Audit Logs' },
+  ];
+
   return (
-    <main className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="dashboard-header-inner">
-          <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
-            <span className="brand-mark shrink-0">BC</span>
-            <span className="min-w-0">
-              <span className="block font-black text-lg leading-tight" style={{fontFamily:'var(--font-montserrat)'}}>Borderless Checkout</span>
-              <span className="block text-xs text-[#756d6f]">Merchant workspace · Base Sepolia</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="flex items-center gap-2 rounded-full border border-[#eadfe2] bg-white px-4 py-2 text-xs font-bold text-[#756d6f]">
-              <Building2 size={15} className="text-[#700c20]"/>
-              <select value={merchantId} onChange={e => setMerchantId(e.target.value)} className="max-w-[190px] bg-transparent text-[#20191b] outline-none">
-                {merchantsList.map(m => <option key={m.id} value={m.id}>{m.businessName}</option>)}
+    <div className="min-h-screen bg-[#fff3e2] text-zinc-900 flex flex-col selection:bg-[#700c20] selection:text-white">
+      {/* Top Header */}
+      <header className="border-b-2 border-[#700c20]/20 bg-[#fff3e2]/95 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          {/* BC Logo Button: Always takes user back to Overview / Dashboard */}
+          <button
+            onClick={() => setActiveTab('overview')}
+            className="flex items-center gap-3.5 group cursor-pointer text-left"
+            title="Return to Main Overview Dashboard"
+          >
+            <div className="w-11 h-11 rounded-[14px] bg-[#700c20] flex items-center justify-center text-white font-black text-lg shadow-sm transition-transform group-hover:scale-105">
+              BC
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-montserrat-extrabold text-base sm:text-xl tracking-tight text-zinc-950">
+                  Borderless Checkout
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#700c20]/10 text-[#700c20] border border-[#700c20]/30 font-play">
+                  Node Engine 2026
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-zinc-600 font-play hidden sm:block">
+                Merchant Workspace • Base Sepolia USDC
+              </p>
+            </div>
+          </button>
+
+          {/* Right Header Actions */}
+          <div className="flex items-center gap-3">
+            {/* Merchant Selector Switcher */}
+            <div className="relative">
+              <select
+                value={merchantId}
+                onChange={(e) => setMerchantId(e.target.value)}
+                className="text-xs font-play font-bold bg-white text-zinc-800 border-2 border-[#700c20] rounded-[24px] px-3.5 py-2 pr-8 shadow-xs focus:outline-none cursor-pointer appearance-none"
+              >
+                {merchantsList.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.businessName}
+                  </option>
+                ))}
               </select>
-            </label>
-            <Button onClick={() => setShowCreateModal(true)} className="bg-[#700c20] hover:bg-[#580918] text-white">
-              <Plus size={16}/> New Order
-            </Button>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-[#700c20]">
+                ▼
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-5 py-2.5 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">New Order</span>
+            </button>
           </div>
         </div>
       </header>
 
-      <section className="dashboard-content">
-        <div className="dashboard-intro flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[.16em] text-[#700c20] mb-2">Merchant overview</p>
-            <h1>{activeTab === 'overview' ? 'Good to see you again.' : tabs.find(t => t.id === activeTab)?.label}</h1>
-            <p>{statsData?.merchant?.businessName || 'Your business'} · A clear view of your payments and operations.</p>
+      {/* Secondary Sub-Nav: Tabs styled with 35px rounding, 5px borders */}
+      <nav className="border-b border-[#700c20]/20 bg-[#fff3e2]/60 backdrop-blur-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 py-3 overflow-x-auto">
+          <div className="flex items-center gap-2">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-5 py-2 rounded-[35px] font-play font-bold text-xs whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? 'bg-[#700c20] text-white border-2 border-[#700c20] shadow-xs'
+                      : 'bg-white text-[#700c20] border-2 border-[#700c20] hover:bg-[#700c20] hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-          <Button variant="outline" onClick={fetchDashboardData} disabled={loading}>
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''}/> Refresh data
-          </Button>
+
+          <button
+            onClick={fetchDashboardData}
+            title="Refresh Store Data"
+            className="p-2 rounded-full bg-white text-[#700c20] border border-[#700c20]/30 hover:bg-[#700c20] hover:text-white transition-colors cursor-pointer shrink-0"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
+      </nav>
 
-        <nav className="dashboard-tabs" aria-label="Dashboard sections">
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`dashboard-tab ${activeTab === tab.id ? 'active' : ''}`}>
-                <Icon size={16}/>{tab.label}
-              </button>
-            );
-          })}
-        </nav>
-
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+        {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              <article className="metric-card">
-                <div className="flex items-center justify-between"><span className="metric-label">Total received</span><Coins size={19} className="text-[#700c20]"/></div>
-                <div className="metric-value">${stats?.totalReceivedUsdc?.toFixed(2) || '0.00'}</div>
-                <p className="metric-foot">USDC · Verified customer payments</p>
-              </article>
-              <article className="metric-card">
-                <div className="flex items-center justify-between"><span className="metric-label">Treasury balance</span><Wallet size={19} className="text-[#700c20]"/></div>
-                <div className="metric-value">${stats?.currentBalanceUsdc?.toFixed(2) || '0.00'}</div>
-                <p className="metric-foot">≈ R {stats?.indicativeZarValue?.toFixed(2) || '0.00'} · Indicative</p>
-              </article>
-              <article className="metric-card">
-                <div className="flex items-center justify-between"><span className="metric-label">Orders paid</span><CheckCircle2 size={19} className="text-[#16835b]"/></div>
-                <div className="metric-value">{orderSummary?.paid?.count ?? stats?.paidOrdersCount ?? 0}</div>
-                <p className="metric-foot">${(orderSummary?.paid?.usdcTotal ?? 0).toFixed(2)} USDC settled</p>
-              </article>
-              <article className="metric-card">
-                <div className="flex items-center justify-between"><span className="metric-label">Awaiting payment</span><Clock3 size={19} className="text-[#d18a18]"/></div>
-                <div className="metric-value">{orderSummary?.pending?.count ?? stats?.unpaidOrdersCount ?? 0}</div>
-                <p className="metric-foot">${(orderSummary?.pending?.usdcTotal ?? 0).toFixed(2)} USDC pending</p>
-              </article>
+          <div className="space-y-8">
+            {/* Top Stat Cards: 5px border, 35px rounding, solid red with white text */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Available Balance */}
+              <div className="rounded-[35px] border-[5px] border-[#700c20] bg-[#700c20] text-white p-7 shadow-sm transition-all duration-300 hover:shadow-lg">
+                <div className="space-y-2">
+                  <span className="text-xs uppercase tracking-wider font-montserrat-extrabold text-white/90">
+                    Available Balance
+                  </span>
+                  <div className="text-3xl sm:text-4xl font-black font-montserrat-extrabold text-white">
+                    ${stats?.availableBalanceUsdc?.toFixed(2) || '0.00'}
+                  </div>
+                  <p className="text-xs font-play text-white/90 pt-1">
+                    Base Sepolia Circle USDC
+                  </p>
+                </div>
+              </div>
+
+              {/* Indicative Rate */}
+              <div className="rounded-[35px] border-[5px] border-[#700c20] bg-[#700c20] text-white p-7 shadow-sm transition-all duration-300 hover:shadow-lg">
+                <div className="space-y-2">
+                  <span className="text-xs uppercase tracking-wider font-montserrat-extrabold text-white/90">
+                    Indicative Rate
+                  </span>
+                  <div className="text-3xl sm:text-4xl font-black font-montserrat-extrabold text-white">
+                    ~R 18.50
+                  </div>
+                  <p className="text-xs font-play text-white/90 pt-1">
+                    South African Rand per USDC
+                  </p>
+                </div>
+              </div>
+
+              {/* Paid Orders */}
+              <div className="rounded-[35px] border-[5px] border-[#700c20] bg-[#700c20] text-white p-7 shadow-sm transition-all duration-300 hover:shadow-lg">
+                <div className="space-y-2">
+                  <span className="text-xs uppercase tracking-wider font-montserrat-extrabold text-white/90">
+                    Paid orders
+                  </span>
+                  <div className="text-3xl sm:text-4xl font-black font-montserrat-extrabold text-white">
+                    {stats?.paidOrdersCount || 0}
+                  </div>
+                  <p className="text-xs font-play text-white/90 pt-1">
+                    ${stats?.totalReceivedUsdc?.toFixed(2) || '0.00'} USDC settled
+                  </p>
+                </div>
+              </div>
+
+              {/* Awaiting payment */}
+              <div className="rounded-[35px] border-[5px] border-[#700c20] bg-[#700c20] text-white p-7 shadow-sm transition-all duration-300 hover:shadow-lg">
+                <div className="space-y-2">
+                  <span className="text-xs uppercase tracking-wider font-montserrat-extrabold text-white/90">
+                    Awaiting payment
+                  </span>
+                  <div className="text-3xl sm:text-4xl font-black font-montserrat-extrabold text-white">
+                    {stats?.unpaidOrdersCount || 0}
+                  </div>
+                  <p className="text-xs font-play text-white/90 pt-1">
+                    USDC pending checkout
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Base Sepolia Settlement Wallet</CardTitle>
-                <CardDescription className="text-xs">
-                  Customer USDC transfers are sent to this merchant-controlled address.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* Base Sepolia Settlement Wallet Card */}
+            <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-6 sm:p-8 shadow-sm">
+              <div className="pb-4 border-b border-[#700c20]/20">
+                <h2 className="font-montserrat-extrabold text-xl text-zinc-950">
+                  Base Sepolia Settlement Wallet
+                </h2>
+                <p className="text-xs sm:text-sm font-play text-zinc-600 mt-1">
+                  Customer USDC transfers are verified and sent to this merchant-controlled address.
+                </p>
+              </div>
+              <div className="pt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Input
                   value={walletDraft || merchant?.walletAddress || ''}
                   onChange={(event) => setWalletDraft(event.target.value)}
                   placeholder="0x..."
                   aria-label="Merchant settlement wallet address"
-                  className="font-mono text-xs"
+                  className="font-mono text-xs bg-[#fff3e2]/50 border-2 border-[#700c20] rounded-[24px] h-11 px-4 flex-1"
                 />
-                <Button
+                <button
                   onClick={saveMerchantWallet}
                   disabled={savingWallet || !(walletDraft || merchant?.walletAddress)}
-                  className="shrink-0 bg-emerald-600 hover:bg-emerald-700"
+                  className="px-6 py-2.5 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all cursor-pointer shadow-sm shrink-0"
                 >
                   {savingWallet ? 'Saving…' : 'Save wallet'}
-                </Button>
-              </CardContent>
+                </button>
+              </div>
               {walletSaveMessage && (
-                <p className="px-6 pb-4 text-xs text-zinc-600 dark:text-zinc-300">{walletSaveMessage}</p>
+                <p className="pt-3 text-xs font-play text-zinc-700">{walletSaveMessage}</p>
               )}
-            </Card>
+            </div>
 
-            <section className="demo-banner">
-              <div>
-                <div className="flex items-center gap-2 mb-2"><ShieldCheck size={19}/><h2 className="font-black text-lg">Protected payments. Clear decisions.</h2></div>
-                <p>Explore the end-to-end customer checkout journey or run the AI Treasury Agent scenarios. Payments are verified on Base Sepolia and supplier settlements are governed by an independent policy engine.</p>
-              </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <Button onClick={() => setActiveTab('treasury-agent')} className="bg-white text-[#700c20] hover:bg-[#f8edf0]">Launch AI Agent <ArrowUpRight size={15}/></Button>
-                {statsData?.recentOrders?.[0] && <Link href={`/checkout/${statsData.recentOrders[0].id}`} target="_blank"><Button variant="outline" className="border-white text-white bg-transparent hover:bg-white hover:text-[#700c20]">Open Checkout <ArrowUpRight size={15}/></Button></Link>}
-              </div>
-            </section>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <OrdersTable orders={statsData?.recentOrders || []} summary={orderSummary} onOpenCreateModal={() => setShowCreateModal(true)}/>
-              <TransactionsTable transactions={statsData?.recentTransactions || []}/>
+            {/* Recent Orders & Transactions Preview Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <OrdersTable
+                orders={statsData?.recentOrders || []}
+                onOpenCreateModal={() => setShowCreateModal(true)}
+                showTopStats={false}
+              />
+              <TransactionsTable transactions={statsData?.recentTransactions || []} />
             </div>
           </div>
         )}
 
-        {activeTab === 'orders' && <OrdersTable orders={statsData?.allOrders || statsData?.recentOrders || []} summary={orderSummary} onOpenCreateModal={() => setShowCreateModal(true)}/>}
-        {activeTab === 'transactions' && <TransactionsTable transactions={statsData?.recentTransactions || []}/>}
-        {activeTab === 'treasury-agent' && <TreasuryAgentView merchantId={merchantId} onActionComplete={fetchDashboardData}/>}
-        {activeTab === 'suppliers' && <SuppliersAndInvoicesView merchantId={merchantId} onRunInvoicePayment={() => setActiveTab('treasury-agent')}/>}
-        {activeTab === 'audit-logs' && <AuditLogsTable merchantId={merchantId}/>}
-      </section>
+        {/* TAB 2: CUSTOMER ORDERS (WITH 3 STATS BOXES AT TOP) */}
+        {activeTab === 'orders' && (
+          <OrdersTable
+            orders={statsData?.recentOrders || []}
+            onOpenCreateModal={() => setShowCreateModal(true)}
+            showTopStats={true}
+          />
+        )}
 
-      <CreateOrderModal merchantId={merchantId} isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} onOrderCreated={fetchDashboardData}/>
+        {/* TAB 3: TRANSACTIONS */}
+        {activeTab === 'transactions' && (
+          <TransactionsTable transactions={statsData?.recentTransactions || []} />
+        )}
 
-      {chatbotOpen && (
-        <div className="chat-panel">
-          <ChatbotView merchantId={merchantId} onClose={() => setChatbotOpen(false)}/>
-        </div>
-      )}
-      <button className="chat-fab" onClick={() => setChatbotOpen(open => !open)} aria-label={chatbotOpen ? 'Close merchant assistant' : 'Open merchant assistant'} title="Ask the merchant assistant">
-        {chatbotOpen ? <X size={25}/> : <MessageCircle size={25}/>}
-      </button>
-    </main>
+        {/* TAB 4: AI TREASURY AGENT */}
+        {activeTab === 'treasury-agent' && (
+          <TreasuryAgentView
+            merchantId={merchantId}
+            onActionComplete={fetchDashboardData}
+          />
+        )}
+
+        {/* TAB 5: SUPPLIERS & INVOICES */}
+        {activeTab === 'suppliers' && (
+          <SuppliersAndInvoicesView
+            merchantId={merchantId}
+            onRunInvoicePayment={() => {
+              setActiveTab('treasury-agent');
+            }}
+          />
+        )}
+
+        {/* TAB 6: AUDIT LOGS */}
+        {activeTab === 'audit-logs' && (
+          <AuditLogsTable merchantId={merchantId} />
+        )}
+      </main>
+
+      {/* Floating Chatbot: Bottom-Right button in brand red (#700c20) */}
+      <FloatingChatbot merchantId={merchantId} />
+
+      {/* Create Order Modal */}
+      <CreateOrderModal
+        merchantId={merchantId}
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onOrderCreated={fetchDashboardData}
+      />
+    </div>
   );
 }

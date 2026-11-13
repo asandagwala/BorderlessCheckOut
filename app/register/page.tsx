@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, ArrowLeft, Store } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,14 +18,21 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessName, email, walletAddress }),
+        body: JSON.stringify({
+          businessName,
+          email,
+          walletAddress,
+        }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');
+
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
@@ -34,29 +42,96 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="auth-page">
-      <div className="auth-wrap">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-[#700c20] mb-6"><ArrowLeft size={16}/> Back to Borderless Checkout</Link>
-        <div className="auth-brand">
-          <span className="brand-mark">BC</span>
-          <span><strong className="block text-xl font-black" style={{fontFamily:'var(--font-montserrat)'}}>Borderless Checkout</strong><span className="text-xs text-[#756d6f]">Merchant workspace</span></span>
-        </div>
-        <section className="auth-card">
-          <div className="mb-7">
-            <p className="text-xs uppercase tracking-[.16em] text-[#700c20] font-bold mb-2">Get started</p>
-            <h1>Register your store</h1>
-            <p className="text-sm text-[#756d6f] mt-2">Set up your merchant profile and Base Sepolia settlement wallet.</p>
+    <div className="min-h-screen bg-[#fff3e2] text-zinc-900 flex flex-col justify-center items-center p-4 selection:bg-[#700c20] selection:text-white">
+      <div className="max-w-md w-full space-y-6">
+        <Link href="/dashboard" className="block text-center space-y-2 cursor-pointer group">
+          <div className="w-12 h-12 rounded-[14px] bg-[#700c20] flex items-center justify-center text-white font-black text-xl mx-auto shadow-md transition-transform group-hover:scale-105">
+            BC
           </div>
-          <form onSubmit={handleRegister} className="space-y-5">
-            <div><label htmlFor="businessName">Business / store name</label><input id="businessName" value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Lagos Coffee Exporters Ltd" required/></div>
-            <div><label htmlFor="businessEmail">Business email</label><input id="businessEmail" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="finance@yourbusiness.com" required/></div>
-            <div><label htmlFor="walletAddress">Settlement wallet address (Base Sepolia)</label><input id="walletAddress" value={walletAddress} onChange={e => setWalletAddress(e.target.value)} placeholder="0x..." required/></div>
-            {error && <p role="alert" className="rounded-xl bg-rose-50 text-rose-700 p-3 text-sm">{error}</p>}
-            <button className="auth-submit" type="submit" disabled={loading}>{loading ? <Loader2 className="inline mr-2 animate-spin" size={17}/> : <Store className="inline mr-2" size={17}/>}Complete registration</button>
+          <h1 className="text-2xl sm:text-3xl font-black font-montserrat-extrabold text-zinc-950">
+            Register SME Merchant
+          </h1>
+          <p className="text-xs font-play text-zinc-600">Start accepting USDC on Base Sepolia in minutes</p>
+        </Link>
+
+        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-8 shadow-xl space-y-6">
+          <div className="border-b border-[#700c20]/20 pb-4">
+            <h2 className="font-montserrat-extrabold text-lg text-zinc-950">Store Details</h2>
+            <p className="text-xs font-play text-zinc-500 mt-0.5">
+              Configure your business and Base Sepolia settlement wallet
+            </p>
+          </div>
+
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <label className="text-xs font-play font-bold text-zinc-700 block mb-1">
+                Business / Store Name
+              </label>
+              <Input
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="e.g. Lagos Coffee Exporters Ltd"
+                required
+                className="bg-[#fff3e2]/50 border-2 border-[#700c20] rounded-[20px] text-xs font-play h-11 px-4"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-play font-bold text-zinc-700 block mb-1">
+                Business Email
+              </label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="finance@lagoscoffee.ng"
+                required
+                className="bg-[#fff3e2]/50 border-2 border-[#700c20] rounded-[20px] text-xs font-play h-11 px-4"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-play font-bold text-zinc-700 block mb-1">
+                Settlement Wallet Address (Base Sepolia)
+              </label>
+              <Input
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value)}
+                placeholder="0x..."
+                required
+                className="bg-[#fff3e2]/50 border-2 border-[#700c20] rounded-[20px] text-xs font-mono h-11 px-4"
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 bg-rose-50 text-rose-800 border border-rose-300 text-xs font-play rounded-[18px]">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-sm flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Registering Store...</span>
+                </>
+              ) : (
+                <span>Complete Registration</span>
+              )}
+            </button>
           </form>
-          <p className="text-sm text-center text-[#756d6f] mt-6">Already registered? <Link href="/login" className="font-bold text-[#700c20]">Sign in</Link></p>
-        </section>
+        </div>
+
+        <div className="text-center">
+          <Link href="/login" className="text-xs font-play font-bold text-[#700c20] hover:underline">
+            Already have a merchant account? Sign In
+          </Link>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

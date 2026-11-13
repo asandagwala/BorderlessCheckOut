@@ -25,7 +25,7 @@ export class PolicyEngine {
       policy = {
         id: `pol_${merchantId}`,
         merchantId,
-        spendingLimit: 500.00,
+        spendingLimit: 50.00,
         approvalRequirements: {
           requireApprovalAbove: 300.00,
           approvedSuppliersOnly: true,

@@ -13,12 +13,9 @@ import {
   ExternalLink, 
   Loader2, 
   Play, 
-  ArrowRight,
-  AlertTriangle,
-  History,
-  Coins
 } from 'lucide-react';
-import { AgentStepTrace, TreasuryAgentRunResult } from '../treasury-agent.service';
+import type { TreasuryAgentRunResult } from '../treasury-agent.service';
+import type { GeminiProposalResponse } from '../gemini-proposal.service';
 
 export function TreasuryAgentView({ 
   merchantId, 
@@ -30,6 +27,9 @@ export function TreasuryAgentView({
   const [running, setRunning] = useState(false);
   const [activeScenario, setActiveScenario] = useState<'SCENARIO_1' | 'SCENARIO_2' | null>(null);
   const [result, setResult] = useState<TreasuryAgentRunResult | null>(null);
+  const [proposal, setProposal] = useState<GeminiProposalResponse | null>(null);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+  const [analyzingInvoiceId, setAnalyzingInvoiceId] = useState<string | null>(null);
 
   const runScenario = async (scenario: 'SCENARIO_1' | 'SCENARIO_2') => {
     setRunning(true);
@@ -57,6 +57,29 @@ export function TreasuryAgentView({
     }
   };
 
+  const analyzeInvoice = async (invoiceId: string) => {
+    setAnalyzingInvoiceId(invoiceId);
+    setProposal(null);
+    setProposalError(null);
+
+    try {
+      const response = await fetch('/api/treasury/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId, action: 'ANALYZE_INVOICE', invoiceId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(typeof data.error === 'string' ? data.error : 'Gemini could not analyze this invoice.');
+      }
+      setProposal(data as GeminiProposalResponse);
+    } catch (error: unknown) {
+      setProposalError(error instanceof Error ? error.message : 'Gemini could not analyze this invoice.');
+    } finally {
+      setAnalyzingInvoiceId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner / Explanation */}
@@ -67,8 +90,7 @@ export function TreasuryAgentView({
             <h3 className="font-semibold text-base">Autonomous AI Treasury Agent Test Bench</h3>
           </div>
           <p className="text-xs text-zinc-400 mt-1 max-w-2xl">
-            Demonstrates controlled financial automation using Claude API tool calling and an independent policy engine. 
-            The agent proposes payments, but only passes execution if strictly within pre-configured spending limits ($500.00).
+            Gemini can analyze an invoice and return a structured payment proposal. The independent backend policy remains authoritative; proposal analysis does not submit a payment.
           </p>
         </div>
         <div className="flex items-center gap-2 bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs">
@@ -100,6 +122,14 @@ export function TreasuryAgentView({
               <li>✓ Policy Engine: APPROVES</li>
               <li>✓ Execution: Submitted to Base Sepolia testnet</li>
             </ul>
+            <Button
+              onClick={() => analyzeInvoice('inv_demo_approved_100')}
+              disabled={Boolean(analyzingInvoiceId)}
+              variant="outline"
+              className="w-full text-xs mt-2"
+            >
+              {analyzingInvoiceId === 'inv_demo_approved_100' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}
+            </Button>
             <Button
               onClick={() => runScenario('SCENARIO_1')}
               disabled={running}
@@ -142,6 +172,14 @@ export function TreasuryAgentView({
               <li>✗ Blockchain: No transaction submitted to network</li>
             </ul>
             <Button
+              onClick={() => analyzeInvoice('inv_demo_rejected_700')}
+              disabled={Boolean(analyzingInvoiceId)}
+              variant="outline"
+              className="w-full text-xs mt-2"
+            >
+              {analyzingInvoiceId === 'inv_demo_rejected_700' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}
+            </Button>
+            <Button
               onClick={() => runScenario('SCENARIO_2')}
               disabled={running}
               variant="destructive"
@@ -162,6 +200,49 @@ export function TreasuryAgentView({
           </CardContent>
         </Card>
       </div>
+
+      {proposalError && (
+        <Card className="border-rose-300 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20">
+          <CardContent className="p-4 text-sm text-rose-700 dark:text-rose-300">
+            {proposalError}
+          </CardContent>
+        </Card>
+      )}
+
+      {proposal && (
+        <Card className="border-sky-200 dark:border-sky-900/60">
+          <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-base">Gemini Payment Proposal</CardTitle>
+              <Badge variant={proposal.recommendation === 'PROPOSE_PAYMENT' ? 'success' : 'destructive'}>
+                {proposal.recommendation.replaceAll('_', ' ')}
+              </Badge>
+              <Badge variant="outline">Policy: {proposal.policyDecision.replaceAll('_', ' ')}</Badge>
+            </div>
+            <CardDescription className="text-xs">
+              Invoice {proposal.invoiceNumber}: ${proposal.invoiceAmount.toFixed(2)} {proposal.currency} to {proposal.supplierName} ({proposal.supplierStatus}). Model: {proposal.model}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 space-y-3 text-sm">
+            <p>{proposal.rationale}</p>
+            <div>
+              <p className="font-medium">Backend policy result</p>
+              <p className="text-muted-foreground">{proposal.policyReason}</p>
+            </div>
+            <div>
+              <p className="font-medium">Gemini risk flags</p>
+              {proposal.riskFlags.length > 0 ? (
+                <ul className="list-disc pl-5 text-muted-foreground">
+                  {proposal.riskFlags.map((flag, index) => <li key={`${index}-${flag}`}>{flag}</li>)}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">Gemini reported no risk flags.</p>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">This is an AI recommendation only. No payment was submitted.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Live Agent Execution Trace View */}
       {result && (

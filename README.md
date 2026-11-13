@@ -61,7 +61,7 @@ borderless-checkout/
 | **Blockchain Network** | Base Sepolia (`chainId: 84532`) | Fast, low-cost L2 settlement for African commerce |
 | **Stablecoin Token** | Circle USDC Testnet | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` |
 | **Blockchain Client** | `viem` v2 | On-chain event decoding, receipts, wallet signer |
-| **AI Intelligence** | Claude 3.5 Sonnet (`@anthropic-ai/sdk`) | Conversational insights & autonomous treasury agent |
+| **AI Intelligence** | Gemini API (Treasury Agent) and Claude API (merchant chatbot) | Structured invoice proposals and conversational insights |
 
 ---
 
@@ -126,7 +126,11 @@ NEXT_PUBLIC_BASE_CHAIN_ID=84532
 NEXT_PUBLIC_USDC_CONTRACT=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 NEXT_PUBLIC_BLOCK_EXPLORER=https://sepolia.basescan.org
 
-# Optional Claude API Key (Deterministic fallback available when unconfigured)
+# Optional Gemini API key for AI Treasury Agent proposals
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.6-flash
+
+# Optional Claude API key for the merchant chatbot
 ANTHROPIC_API_KEY=your_anthropic_api_key
 
 # Database (Drizzle ORM with PostgreSQL / Supabase)

@@ -1,8 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { db } from '@/lib/database/db';
 import { TreasuryService, TreasuryExecutionResult } from '@/modules/treasury/treasury.service';
-import { PolicyEngine } from '@/modules/treasury/policy-engine.service';
-import { ENV } from '@/lib/env';
 
 export interface AgentStepTrace {
   step: number;
@@ -25,17 +22,6 @@ export interface TreasuryAgentRunResult {
   traces: AgentStepTrace[];
   executionResult: TreasuryExecutionResult;
 }
-
-const TREASURY_AGENT_SYSTEM_PROMPT = `
-You are the Autonomous AI Treasury Agent for Borderless Checkout.
-Your responsibility is to monitor outstanding supplier invoices, verify them against approved vendor lists, check merchant spending limits, and safely initiate authorized settlements.
-
-SECURITY DIRECTIVES:
-1. You do not possess direct private keys or direct access to blockchain wallets.
-2. All payment actions must be initiated through the protected tool 'propose_and_execute_supplier_payment'.
-3. An independent backend policy engine validates every request. You cannot alter policies or override spending caps.
-4. Report your reasoning clearly at each step.
-`;
 
 export class TreasuryAgentService {
   /**

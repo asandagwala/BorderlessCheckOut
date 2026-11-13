@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { TreasuryAgentService } from '@/modules/ai-treasury-agent/treasury-agent.service';
+import { GeminiProposalService } from '@/modules/ai-treasury-agent/gemini-proposal.service';
 import { treasuryAgentActionSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
     if (action === 'RUN_SCENARIO_2') {
       const scenarioResult = await TreasuryAgentService.runScenario2Rejected(merchantId);
       return NextResponse.json(scenarioResult);
+    }
+
+    if (action === 'ANALYZE_INVOICE' && invoiceId) {
+      const proposal = await GeminiProposalService.generateForInvoice(merchantId, invoiceId);
+      return NextResponse.json(proposal);
     }
 
     if (action === 'RUN_INVOICE' && invoiceId) {

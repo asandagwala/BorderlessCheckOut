@@ -44,15 +44,15 @@ export const chatMessageInputSchema = z.object({
 // AI Treasury Agent Action Schema
 export const treasuryAgentActionSchema = z.object({
   merchantId: z.string().min(1, 'merchantId is required'),
-  action: z.enum(['RUN_SCENARIO_1', 'RUN_SCENARIO_2', 'RUN_INVOICE']),
+  action: z.enum(['RUN_SCENARIO_1', 'RUN_SCENARIO_2', 'RUN_INVOICE', 'ANALYZE_INVOICE']),
   invoiceId: z.string().optional(),
 }).refine(data => {
-  if (data.action === 'RUN_INVOICE' && !data.invoiceId) {
+  if (['RUN_INVOICE', 'ANALYZE_INVOICE'].includes(data.action) && !data.invoiceId) {
     return false;
   }
   return true;
 }, {
-  message: "invoiceId is required when action is 'RUN_INVOICE'",
+  message: 'invoiceId is required for invoice analysis or execution',
   path: ['invoiceId'],
 });
 

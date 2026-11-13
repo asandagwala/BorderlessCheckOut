@@ -2,12 +2,12 @@ import { db } from '@/lib/database/db';
 import { PolicyEngine } from './policy-engine.service';
 import { getTreasuryWalletClient } from '@/modules/blockchain/viem-client';
 import { CHAIN_CONFIG, ERC20_ABI } from '@/modules/blockchain/config';
-import { AgentAuditLog, Transaction } from '@/lib/database/types';
+import { AgentAuditLog, PolicyDecision, Transaction } from '@/lib/database/types';
 import { parseUnits } from 'viem';
 
 export interface TreasuryExecutionResult {
   success: boolean;
-  decision: string;
+  decision: PolicyDecision;
   reason: string;
   invoiceId: string;
   txHash?: string | null;
@@ -109,7 +109,6 @@ export class TreasuryService {
 
     // 2. Policy passed: Attempt blockchain execution on Base Sepolia
     let txHash: string | null = null;
-    let executionStatus: 'EXECUTED' | 'FAILED' = 'EXECUTED';
     let executionNote = '';
 
     const signer = getTreasuryWalletClient();
@@ -124,8 +123,9 @@ export class TreasuryService {
         });
         txHash = hash;
         executionNote = 'Executed live on Base Sepolia blockchain.';
-      } catch (err: any) {
-        console.warn('Live Base Sepolia on-chain submission fallback:', err.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn('Live Base Sepolia on-chain submission fallback:', message);
         // Fallback realistic testnet transaction hash for demonstration
         txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
         executionNote = 'Executed with Base Sepolia testnet reference hash.';

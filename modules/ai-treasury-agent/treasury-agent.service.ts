@@ -88,7 +88,7 @@ export class TreasuryAgentService {
 
     // Step 4: Check merchant spending policy
     addTrace('POLICY_CHECK', 'Retrieving merchant spending limits and dual-control rules...');
-    let policy = await db.getPolicyByMerchantId(merchantId);
+    const policy = await db.getPolicyByMerchantId(merchantId);
     const spendingLimit = policy ? Number(policy.spendingLimit) : 500.00;
     addTrace('POLICY_RETRIEVED', `Merchant spending limit is set to $${spendingLimit.toFixed(2)} USDC per transaction.`, 'info');
 
@@ -130,7 +130,7 @@ export class TreasuryAgentService {
       invoiceAmount: amount,
       supplierName,
       policyLimit: spendingLimit,
-      decision: executionResult.decision as any,
+      decision: executionResult.decision,
       reason: executionResult.reason,
       executedOnChain: executionResult.success,
       txHash: executionResult.txHash || null,

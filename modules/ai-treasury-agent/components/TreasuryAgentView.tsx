@@ -90,7 +90,7 @@ export function TreasuryAgentView({
               Authorized Supplier Settlement
             </CardTitle>
             <CardDescription className="text-xs">
-              Supplier is approved ("Cape Agro Packaging"), balance is sufficient, and invoice ($100) is well within $500 spending limit.
+              Supplier is approved (&quot;Cape Agro Packaging&quot;), balance is sufficient, and invoice ($100) is well within $500 spending limit.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0 space-y-3">

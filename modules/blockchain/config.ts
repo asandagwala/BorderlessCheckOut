@@ -4,7 +4,9 @@ import { ENV } from '@/lib/env';
 
 export const CHAIN_CONFIG = {
   chain: baseSepolia,
-  chainId: ENV.BASE_SEPOLIA_CHAIN_ID,
+  // Keep the advertised chain ID tied to viem's chain definition. lib/env.ts
+  // rejects any configured chain ID other than Base Sepolia (84532).
+  chainId: baseSepolia.id,
   rpcUrl: ENV.BASE_SEPOLIA_RPC_URL,
   usdcContractAddress: ENV.USDC_CONTRACT_ADDRESS,
   usdcDecimals: 6,

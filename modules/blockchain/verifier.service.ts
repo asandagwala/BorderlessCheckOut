@@ -13,6 +13,15 @@ export interface VerificationResult {
   tokenContract?: string;
 }
 
+export function getUsdcAmountMismatch(
+  actualUnits: bigint,
+  expectedUnits: bigint
+): 'UNDERPAYMENT' | 'OVERPAYMENT' | null {
+  if (actualUnits < expectedUnits) return 'UNDERPAYMENT';
+  if (actualUnits > expectedUnits) return 'OVERPAYMENT';
+  return null;
+}
+
 export class BlockchainPaymentVerifier {
   /**
    * Verifies an on-chain USDC transfer on Base Sepolia testnet.
@@ -117,17 +126,17 @@ export class BlockchainPaymentVerifier {
 
       // Validate amount (USDC has 6 decimals)
       const expectedUnits = parseUnits(expectedUsdcAmount.toString(), CHAIN_CONFIG.usdcDecimals);
-      // Strict amount check with 0.1% tolerance for micro-rounding if applicable
       const parsedAmount = Number(formatUnits(amountUnits, CHAIN_CONFIG.usdcDecimals));
+      const amountMismatch = getUsdcAmountMismatch(amountUnits, expectedUnits);
 
-      if (amountUnits < expectedUnits) {
+      if (amountMismatch) {
         return {
           verified: false,
           txHash,
           senderAddress: sender,
           recipientAddress: recipient,
           amount: parsedAmount,
-          error: `Underpayment: expected ${expectedUsdcAmount} USDC, but received ${parsedAmount} USDC.`,
+          error: `${amountMismatch === 'UNDERPAYMENT' ? 'Underpayment' : 'Overpayment'}: expected exactly ${expectedUsdcAmount} USDC, but received ${parsedAmount} USDC.`,
         };
       }
 

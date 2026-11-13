@@ -5,8 +5,27 @@ import { PolicyEngine } from '../modules/treasury/policy-engine.service';
 import { TreasuryService } from '../modules/treasury/treasury.service';
 import { ChatbotService } from '../modules/ai-chatbot/chatbot.service';
 import { TreasuryAgentService } from '../modules/ai-treasury-agent/treasury-agent.service';
+import { CHAIN_CONFIG } from '../modules/blockchain/config';
+import { getUsdcAmountMismatch } from '../modules/blockchain/verifier.service';
 
 async function runTests() {
+  if (CHAIN_CONFIG.chain.id !== 84532 || CHAIN_CONFIG.chainId !== CHAIN_CONFIG.chain.id) {
+    throw new Error('Blockchain client and configured chain ID must both use Base Sepolia (84532)');
+  }
+  console.log('✓ Blockchain client and configured chain ID both use Base Sepolia (84532)');
+
+  const expectedUsdcUnits = BigInt('1250000');
+  if (getUsdcAmountMismatch(BigInt('1249999'), expectedUsdcUnits) !== 'UNDERPAYMENT') {
+    throw new Error('USDC verifier must reject underpayments');
+  }
+  if (getUsdcAmountMismatch(expectedUsdcUnits, expectedUsdcUnits) !== null) {
+    throw new Error('USDC verifier must accept an exact payment');
+  }
+  if (getUsdcAmountMismatch(BigInt('1250001'), expectedUsdcUnits) !== 'OVERPAYMENT') {
+    throw new Error('USDC verifier must reject overpayments');
+  }
+  console.log('✓ USDC verifier requires exact amounts and rejects underpayments and overpayments');
+
   console.log('====================================================');
   console.log('🚀 Running Borderless Checkout Integration Test Suite');
   console.log('====================================================\n');

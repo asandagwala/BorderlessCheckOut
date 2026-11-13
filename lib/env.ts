@@ -2,7 +2,10 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NEXT_PUBLIC_BASE_SEPOLIA_RPC: z.string().url().default('https://sepolia.base.org'),
-  NEXT_PUBLIC_BASE_CHAIN_ID: z.coerce.number().default(84532),
+  NEXT_PUBLIC_BASE_CHAIN_ID: z.coerce
+    .number()
+    .refine(chainId => chainId === 84532, 'must be 84532 for Base Sepolia')
+    .default(84532),
   NEXT_PUBLIC_USDC_CONTRACT: z.string().default('0x036CbD53842c5426634e7929541eC2318f3dCF7e'),
   NEXT_PUBLIC_BLOCK_EXPLORER: z.string().url().default('https://sepolia.basescan.org'),
   ANTHROPIC_API_KEY: z.string().optional().default(''),

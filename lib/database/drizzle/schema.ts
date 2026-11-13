@@ -1,5 +1,6 @@
 import { pgTable, text, numeric, timestamp, jsonb, bigint, varchar } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 // 1. Merchants Table
 export const merchants = pgTable('merchants', {
@@ -140,3 +141,25 @@ export type DrizzleSupplier = typeof suppliers.$inferSelect;
 export type DrizzleSupplierInvoice = typeof supplierInvoices.$inferSelect;
 export type DrizzleTreasuryPolicy = typeof treasuryPolicies.$inferSelect;
 export type DrizzleAgentAuditLog = typeof agentAuditLogs.$inferSelect;
+
+// Drizzle-Zod Schemas for Type-Safe Validation
+export const insertMerchantSchema = createInsertSchema(merchants);
+export const selectMerchantSchema = createSelectSchema(merchants);
+
+export const insertOrderSchema = createInsertSchema(orders);
+export const selectOrderSchema = createSelectSchema(orders);
+
+export const insertTransactionSchema = createInsertSchema(transactions);
+export const selectTransactionSchema = createSelectSchema(transactions);
+
+export const insertSupplierSchema = createInsertSchema(suppliers);
+export const selectSupplierSchema = createSelectSchema(suppliers);
+
+export const insertSupplierInvoiceSchema = createInsertSchema(supplierInvoices);
+export const selectSupplierInvoiceSchema = createSelectSchema(supplierInvoices);
+
+export const insertTreasuryPolicySchema = createInsertSchema(treasuryPolicies);
+export const selectTreasuryPolicySchema = createSelectSchema(treasuryPolicies);
+
+export const insertAgentAuditLogSchema = createInsertSchema(agentAuditLogs);
+export const selectAgentAuditLogSchema = createSelectSchema(agentAuditLogs);

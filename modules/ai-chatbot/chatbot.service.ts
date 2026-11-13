@@ -1,7 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
 import { db } from '@/lib/database/db';
 import { TreasuryService } from '@/modules/treasury/treasury.service';
 import { ENV } from '@/lib/env';
+
+// Tool input schemas validated by Zod
+export const recentTransactionsToolSchema = z.object({
+  limit: z.number().int().min(1).max(50).default(5).optional(),
+});
 
 // System prompt enforcing security boundaries and read-only constraints
 const CHATBOT_SYSTEM_PROMPT = `
@@ -53,8 +59,9 @@ export class ChatbotService {
       }
 
       case 'get_recent_transactions': {
+        const parsed = recentTransactionsToolSchema.safeParse(toolInput || {});
+        const limit = parsed.success ? (parsed.data.limit || 5) : 5;
         const txs = await db.getTransactionsByMerchantId(merchantId);
-        const limit = toolInput?.limit || 5;
         const recent = txs.slice(0, limit);
         return {
           count: recent.length,

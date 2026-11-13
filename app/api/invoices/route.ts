@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
+import { createInvoiceInputSchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,22 +11,24 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { merchantId, supplierId, invoiceNumber, invoiceAmount, dueDate } = body;
+    const json = await request.json();
+    const result = createInvoiceInputSchema.safeParse(json);
 
-    if (!merchantId || !supplierId || !invoiceNumber || !invoiceAmount) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'merchantId, supplierId, invoiceNumber, and invoiceAmount are required' },
+        { error: result.error.issues[0].message, details: result.error.issues },
         { status: 400 }
       );
     }
+
+    const { merchantId, supplierId, invoiceNumber, invoiceAmount, dueDate } = result.data;
 
     const newInvoice = await db.createInvoice({
       id: `inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       merchantId,
       supplierId,
       invoiceNumber,
-      invoiceAmount: Number(invoiceAmount),
+      invoiceAmount,
       currency: 'USDC',
       dueDate: dueDate || new Date(Date.now() + 7 * 86400000).toISOString(),
       paymentStatus: 'PENDING',

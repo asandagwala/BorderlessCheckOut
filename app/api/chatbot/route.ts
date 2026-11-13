@@ -1,25 +1,28 @@
 import { NextResponse } from 'next/server';
 import { ChatbotService } from '@/modules/ai-chatbot/chatbot.service';
+import { chatMessageInputSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { merchantId, message, history } = body;
+    const json = await request.json();
+    const result = chatMessageInputSchema.safeParse(json);
 
-    if (!merchantId || !message) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'merchantId and message are required.' },
+        { error: result.error.issues[0].message, details: result.error.issues },
         { status: 400 }
       );
     }
 
-    const result = await ChatbotService.handleChatMessage(
+    const { merchantId, message, history } = result.data;
+
+    const chatResponse = await ChatbotService.handleChatMessage(
       merchantId,
       message,
-      history || []
+      history
     );
 
-    return NextResponse.json(result);
+    return NextResponse.json(chatResponse);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

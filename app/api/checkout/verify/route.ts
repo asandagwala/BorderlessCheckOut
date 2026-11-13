@@ -1,31 +1,34 @@
 import { NextResponse } from 'next/server';
 import { ReconciliationService } from '@/modules/reconciliation/reconciliation.service';
+import { verifyPaymentInputSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { orderId, txHash, simulated } = body;
+    const json = await request.json();
+    const result = verifyPaymentInputSchema.safeParse(json);
 
-    if (!orderId || !txHash) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'orderId and txHash are required.' },
+        { error: result.error.issues[0].message, details: result.error.issues },
         { status: 400 }
       );
     }
 
-    const result = await ReconciliationService.reconcileOrderPayment(
+    const { orderId, txHash, simulated } = result.data;
+
+    const recon = await ReconciliationService.reconcileOrderPayment(
       orderId,
       txHash,
-      Boolean(simulated)
+      simulated
     );
 
-    if (!result.success) {
+    if (!recon.success) {
       return NextResponse.json(
         {
           success: false,
-          error: result.error,
-          message: result.message,
-          orderStatus: result.orderStatus,
+          error: recon.error,
+          message: recon.message,
+          orderStatus: recon.orderStatus,
         },
         { status: 422 }
       );
@@ -33,9 +36,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      orderStatus: result.orderStatus,
-      message: result.message,
-      transaction: result.transaction,
+      orderStatus: recon.orderStatus,
+      message: recon.message,
+      transaction: recon.transaction,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

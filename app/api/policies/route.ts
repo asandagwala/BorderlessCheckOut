@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
+import { updatePolicyInputSchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -25,20 +26,25 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { merchantId, spendingLimit, requireApprovalAbove, approvedSuppliersOnly } = body;
+    const json = await request.json();
+    const result = updatePolicyInputSchema.safeParse(json);
 
-    if (!merchantId) {
-      return NextResponse.json({ error: 'merchantId is required' }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error.issues[0].message, details: result.error.issues },
+        { status: 400 }
+      );
     }
+
+    const { merchantId, spendingLimit, requireApprovalAbove, approvedSuppliersOnly } = result.data;
 
     const updated = await db.updatePolicy({
       id: `pol_${merchantId}`,
       merchantId,
-      spendingLimit: Number(spendingLimit) || 500.00,
+      spendingLimit,
       approvalRequirements: {
-        requireApprovalAbove: Number(requireApprovalAbove) || 300.00,
-        approvedSuppliersOnly: approvedSuppliersOnly !== undefined ? Boolean(approvedSuppliersOnly) : true,
+        requireApprovalAbove: requireApprovalAbove ?? 300.00,
+        approvedSuppliersOnly,
       },
       createdAt: new Date().toISOString(),
     });

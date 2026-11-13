@@ -82,8 +82,49 @@ async function runTests() {
   const latestLog = logs[0];
   console.log(`  Latest log: [${latestLog.agentAction}] Decision: ${latestLog.policyDecision} - Status: ${latestLog.executionStatus}`);
 
+  // Test 7: Zod & Drizzle-Zod Schema Validations
+  console.log('\nTest 7: Zod & Drizzle-Zod Validation Layer...');
+  const { 
+    createMerchantInputSchema, 
+    createOrderInputSchema, 
+    verifyPaymentInputSchema,
+    treasuryAgentActionSchema 
+  } = await import('../lib/validations');
+  const { insertMerchantSchema, insertOrderSchema } = await import('../lib/database/drizzle/schema');
+
+  // Validate valid merchant input
+  const validMerchant = createMerchantInputSchema.safeParse({
+    businessName: 'Nairobi Fresh Foods',
+    email: 'admin@nairobihub.ke',
+    walletAddress: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+  });
+  if (!validMerchant.success) throw new Error('Zod valid merchant should have passed');
+  console.log('  ✓ Zod validated valid merchant creation payload');
+
+  // Validate invalid wallet rejection
+  const invalidMerchant = createMerchantInputSchema.safeParse({
+    businessName: 'Invalid Co',
+    email: 'bad-email',
+    walletAddress: '0xNotAValidHexAddress',
+  });
+  if (invalidMerchant.success) throw new Error('Zod should reject invalid wallet and email');
+  console.log('  ✓ Zod correctly rejected invalid email and malformed EVM address');
+
+  // Validate Drizzle-Zod auto-generated schemas
+  const drizzleOrderCheck = insertOrderSchema.safeParse({
+    id: 'ord_test_zod',
+    merchantId: 'merch_kigali_01',
+    customerReference: 'CUST-ZOD-99',
+    orderAmount: '500.00',
+    currency: 'ZAR',
+    usdcAmount: '27.027000',
+    paymentReference: 'BC-ZOD-99',
+  });
+  if (!drizzleOrderCheck.success) throw new Error('Drizzle-Zod order validation failed');
+  console.log('  ✓ Drizzle-Zod generated schema verified insertOrderSchema successfully');
+
   console.log('\n====================================================');
-  console.log('✅ ALL INTEGRATION TESTS PASSED CLEANLY!');
+  console.log('✅ ALL INTEGRATION TESTS PASSED CLEANLY (INCL. ZOD)!');
   console.log('====================================================\n');
 }
 

@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
+import { createMerchantInputSchema, getMerchantQuerySchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const email = searchParams.get('email');
-  const id = searchParams.get('id');
+  const parsed = getMerchantQuerySchema.safeParse({
+    email: searchParams.get('email') || undefined,
+    id: searchParams.get('id') || undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+  }
+
+  const { id, email } = parsed.data;
 
   if (id) {
     const merchant = await db.getMerchantById(id);
@@ -22,15 +31,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { businessName, email, walletAddress } = body;
+    const json = await request.json();
+    const result = createMerchantInputSchema.safeParse(json);
 
-    if (!businessName || !email || !walletAddress) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'businessName, email, and walletAddress are required' },
+        { error: result.error.issues[0].message, details: result.error.issues },
         { status: 400 }
       );
     }
+
+    const { businessName, email, walletAddress } = result.data;
 
     const existing = await db.getMerchantByEmail(email);
     if (existing) {
@@ -45,7 +56,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     });
 
-    return NextResponse.json({ merchant: newMerchant, isNew: true });
+    return NextResponse.json({ merchant: newMerchant, isNew: true }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

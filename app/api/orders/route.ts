@@ -1,30 +1,34 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
 import { ENV } from '@/lib/env';
+import { createOrderInputSchema, getOrdersQuerySchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const merchantId = searchParams.get('merchantId') || 'merch_kigali_01';
+  const parsed = getOrdersQuerySchema.safeParse({
+    merchantId: searchParams.get('merchantId') || undefined,
+  });
 
+  const merchantId = parsed.success ? parsed.data.merchantId : 'merch_kigali_01';
   const orders = await db.getOrdersByMerchantId(merchantId);
   return NextResponse.json({ orders });
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { merchantId, customerReference, orderAmountZar, usdcAmount } = body;
+    const json = await request.json();
+    const result = createOrderInputSchema.safeParse(json);
 
-    if (!merchantId || !customerReference) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'merchantId and customerReference are required' },
+        { error: result.error.issues[0].message, details: result.error.issues },
         { status: 400 }
       );
     }
 
-    const zar = Number(orderAmountZar) || 0;
-    // Calculate USDC amount if not directly provided
-    const calculatedUsdc = usdcAmount ? Number(usdcAmount) : Number((zar / ENV.INDICATIVE_USD_TO_ZAR_RATE).toFixed(2));
+    const { merchantId, customerReference, orderAmountZar, usdcAmount } = result.data;
+    const zar = orderAmountZar;
+    const calculatedUsdc = usdcAmount ?? Number((zar / ENV.INDICATIVE_USD_TO_ZAR_RATE).toFixed(2));
 
     const shortId = Math.random().toString(36).substring(2, 7).toUpperCase();
     const orderId = `ord_${Date.now()}_${shortId}`;

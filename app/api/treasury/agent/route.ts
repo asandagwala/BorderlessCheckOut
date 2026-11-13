@@ -1,34 +1,37 @@
 import { NextResponse } from 'next/server';
 import { TreasuryAgentService } from '@/modules/ai-treasury-agent/treasury-agent.service';
+import { treasuryAgentActionSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { merchantId, action, invoiceId } = body;
+    const json = await request.json();
+    const result = treasuryAgentActionSchema.safeParse(json);
 
-    if (!merchantId) {
-      return NextResponse.json({ error: 'merchantId is required' }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error.issues[0].message, details: result.error.issues },
+        { status: 400 }
+      );
     }
 
+    const { merchantId, action, invoiceId } = result.data;
+
     if (action === 'RUN_SCENARIO_1') {
-      const result = await TreasuryAgentService.runScenario1Approved(merchantId);
-      return NextResponse.json(result);
+      const scenarioResult = await TreasuryAgentService.runScenario1Approved(merchantId);
+      return NextResponse.json(scenarioResult);
     }
 
     if (action === 'RUN_SCENARIO_2') {
-      const result = await TreasuryAgentService.runScenario2Rejected(merchantId);
-      return NextResponse.json(result);
+      const scenarioResult = await TreasuryAgentService.runScenario2Rejected(merchantId);
+      return NextResponse.json(scenarioResult);
     }
 
     if (action === 'RUN_INVOICE' && invoiceId) {
-      const result = await TreasuryAgentService.runWorkflowForInvoice(merchantId, invoiceId);
-      return NextResponse.json(result);
+      const invoiceResult = await TreasuryAgentService.runWorkflowForInvoice(merchantId, invoiceId);
+      return NextResponse.json(invoiceResult);
     }
 
-    return NextResponse.json(
-      { error: "Invalid action. Expected 'RUN_SCENARIO_1', 'RUN_SCENARIO_2', or 'RUN_INVOICE' with invoiceId." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

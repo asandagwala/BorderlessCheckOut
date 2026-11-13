@@ -146,7 +146,7 @@ export class PolicyEngine {
 
     // 5. Require human review above the dual-control threshold. Never auto-execute.
     const threshold = Number(policy.approvalRequirements.requireApprovalAbove);
-    if (threshold && invoiceAmount > threshold) {
+    if (invoiceAmount > threshold) {
       return {
         decision: 'REQUIRES_APPROVAL',
         isAllowed: false,

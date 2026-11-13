@@ -162,7 +162,11 @@ async function runTests() {
     createMerchantInputSchema, 
     createOrderInputSchema, 
     verifyPaymentInputSchema,
-    treasuryAgentActionSchema 
+    treasuryAgentActionSchema,
+    chatMessageInputSchema,
+    createSupplierInputSchema,
+    createInvoiceInputSchema,
+    updatePolicyInputSchema,
   } = await import('../lib/validations');
   const { insertMerchantSchema, insertOrderSchema } = await import('../lib/database/drizzle/schema');
 
@@ -183,6 +187,75 @@ async function runTests() {
   });
   if (invalidMerchant.success) throw new Error('Zod should reject invalid wallet and email');
   console.log('  ✓ Zod correctly rejected invalid email and malformed EVM address');
+
+  const whitespaceMerchant = createMerchantInputSchema.safeParse({
+    businessName: '   ',
+    email: 'admin@example.com',
+    walletAddress: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+  });
+  if (whitespaceMerchant.success) throw new Error('Merchant names containing only whitespace must be rejected');
+
+  const invalidOrderAmount = createOrderInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    customerReference: 'CUST-INVALID',
+    orderAmountZar: 'Infinity',
+  });
+  if (invalidOrderAmount.success) throw new Error('Non-finite order amounts must be rejected');
+
+  const excessPrecisionOrder = createOrderInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    customerReference: 'CUST-PRECISION',
+    orderAmountZar: 12.345,
+  });
+  if (excessPrecisionOrder.success) throw new Error('Order amounts must match the database currency precision');
+
+  const validOrderAmount = createOrderInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    customerReference: 'CUST-VALID',
+    orderAmountZar: 12.34,
+  });
+  if (!validOrderAmount.success) throw new Error('Valid two-decimal order amounts should be accepted');
+
+  const invalidInvoiceAmount = createInvoiceInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    supplierId: 'supp_cape_agro_01',
+    invoiceNumber: 'INV-NAN',
+    invoiceAmount: 'NaN',
+  });
+  if (invalidInvoiceAmount.success) throw new Error('Non-numeric invoice amounts must be rejected');
+
+  const invalidPolicyThreshold = updatePolicyInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    spendingLimit: '500',
+    requireApprovalAbove: '-1',
+    approvedSuppliersOnly: true,
+  });
+  if (invalidPolicyThreshold.success) throw new Error('Negative approval thresholds must be rejected');
+
+  const mismatchedPolicyThreshold = updatePolicyInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    spendingLimit: '500',
+    requireApprovalAbove: '501',
+    approvedSuppliersOnly: true,
+  });
+  if (mismatchedPolicyThreshold.success) throw new Error('Approval thresholds must not exceed the spending cap');
+
+  const unknownSupplierField = createSupplierInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    supplierName: 'Nairobi Supplier',
+    walletAddress: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+    approvalStatus: 'APPROVED',
+    admin: true,
+  });
+  if (unknownSupplierField.success) throw new Error('Mutation schemas must reject unrecognized fields');
+
+  const oversizedChatHistory = chatMessageInputSchema.safeParse({
+    merchantId: 'merch_kigali_01',
+    message: 'hello',
+    history: Array.from({ length: 21 }, () => ({ role: 'user', content: 'hello' })),
+  });
+  if (oversizedChatHistory.success) throw new Error('Chat history must be capped at 20 messages');
+  console.log('  Zod rejects whitespace-only, non-finite, out-of-range, oversized, and unknown inputs');
 
   // Validate Drizzle-Zod auto-generated schemas
   const drizzleOrderCheck = insertOrderSchema.safeParse({

@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
 import { ENV } from '@/lib/env';
-import { createOrderInputSchema, getOrdersQuerySchema } from '@/lib/validations';
+import { createOrderInputSchema } from '@/lib/validations';
+import { authorizeMerchant } from '@/lib/auth/session';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const parsed = getOrdersQuerySchema.safeParse({
-    merchantId: searchParams.get('merchantId') || undefined,
-  });
-
-  const merchantId = parsed.success ? parsed.data.merchantId : 'merch_kigali_01';
+  const authorization = await authorizeMerchant(searchParams.get('merchantId'));
+  if (!authorization.ok) {
+    return NextResponse.json({ error: 'Authentication required or merchant access denied.' }, { status: authorization.status });
+  }
+  const merchantId = authorization.merchantId;
   const orders = await db.getOrdersByMerchantId(merchantId);
   return NextResponse.json({ orders });
 }
@@ -27,6 +28,10 @@ export async function POST(request: Request) {
     }
 
     const { merchantId, customerReference, orderAmountZar } = result.data;
+    const authorization = await authorizeMerchant(merchantId);
+    if (!authorization.ok) {
+      return NextResponse.json({ error: 'Authentication required or merchant access denied.' }, { status: authorization.status });
+    }
     const zar = orderAmountZar;
     const calculatedUsdc = Number((zar / ENV.INDICATIVE_USD_TO_ZAR_RATE).toFixed(2));
 

@@ -131,6 +131,9 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 
 # Database (Drizzle ORM with PostgreSQL / Supabase)
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/borderless_checkout
+
+# Required in production for signed merchant sessions (generate at least 32 random characters)
+APP_SESSION_SECRET=replace-with-a-random-secret-at-least-32-characters-long
 ```
 
 *Note: The application includes a pre-seeded in-memory/fallback repository, so you can immediately run and test the app even before connecting a live PostgreSQL database.*

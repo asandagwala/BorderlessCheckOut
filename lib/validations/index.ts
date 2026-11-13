@@ -3,13 +3,21 @@ import { z } from 'zod';
 // Merchant Schemas
 export const createMerchantInputSchema = z.object({
   businessName: z.string().min(2, 'Business name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').transform(value => value.trim().toLowerCase()),
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Must be a valid EVM wallet address (0x...)'),
 });
 
 export const getMerchantQuerySchema = z.object({
   email: z.string().email().optional(),
   id: z.string().min(1).optional(),
+});
+
+export const authChallengeInputSchema = z.strictObject({
+  email: z.string().email().transform(value => value.trim().toLowerCase()),
+});
+
+export const authVerifyInputSchema = z.strictObject({
+  signature: z.string().regex(/^0x[a-fA-F0-9]{130}$/, 'A 65-byte wallet signature is required.'),
 });
 
 // Order Schemas

@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
 import { createInvoiceInputSchema } from '@/lib/validations';
+import { authorizeMerchant } from '@/lib/auth/session';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const merchantId = searchParams.get('merchantId') || 'merch_kigali_01';
+  const authorization = await authorizeMerchant(searchParams.get('merchantId'));
+  if (!authorization.ok) {
+    return NextResponse.json({ error: 'Authentication required or merchant access denied.' }, { status: authorization.status });
+  }
+  const merchantId = authorization.merchantId;
   const invoices = await db.getInvoicesByMerchantId(merchantId);
   return NextResponse.json({ invoices });
 }
@@ -22,6 +27,10 @@ export async function POST(request: Request) {
     }
 
     const { merchantId, supplierId, invoiceNumber, invoiceAmount, dueDate } = result.data;
+    const authorization = await authorizeMerchant(merchantId);
+    if (!authorization.ok) {
+      return NextResponse.json({ error: 'Authentication required or merchant access denied.' }, { status: authorization.status });
+    }
 
     const newInvoice = await db.createInvoice({
       id: `inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,

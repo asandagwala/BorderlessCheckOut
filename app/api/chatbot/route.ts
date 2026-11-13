@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ChatbotService } from '@/modules/ai-chatbot/chatbot.service';
 import { chatMessageInputSchema } from '@/lib/validations';
+import { authorizeMerchant } from '@/lib/auth/session';
 
 export async function POST(request: Request) {
   try {
@@ -15,9 +16,13 @@ export async function POST(request: Request) {
     }
 
     const { merchantId, message, history } = result.data;
+    const authorization = await authorizeMerchant(merchantId);
+    if (!authorization.ok) {
+      return NextResponse.json({ error: 'Authentication required or merchant access denied.' }, { status: authorization.status });
+    }
 
     const chatResponse = await ChatbotService.handleChatMessage(
-      merchantId,
+      authorization.merchantId,
       message,
       history
     );

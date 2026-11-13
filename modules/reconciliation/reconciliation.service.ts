@@ -1,5 +1,5 @@
 import { db } from '@/lib/database/db';
-import { BlockchainPaymentVerifier, VerificationResult } from '@/modules/blockchain/verifier.service';
+import { BlockchainPaymentVerifier } from '@/modules/blockchain/verifier.service';
 import { Order, Transaction } from '@/lib/database/types';
 import { CHAIN_CONFIG } from '@/modules/blockchain/config';
 
@@ -21,11 +21,7 @@ export class ReconciliationService {
   static async reconcileOrderPayment(
     orderId: string,
     txHash: string,
-    verifyPayment: (
-      txHash: `0x${string}`,
-      expectedRecipient: string,
-      expectedUsdcAmount: number
-    ) => Promise<VerificationResult> = BlockchainPaymentVerifier.verifyPayment
+    simulatedMode: boolean = false
   ): Promise<ReconciliationResult> {
     const order = await db.getOrderById(orderId);
     if (!order) {
@@ -100,11 +96,27 @@ export class ReconciliationService {
       };
     }
 
-    const verification = await verifyPayment(
-      txHash as `0x${string}`,
-      merchant.walletAddress,
-      order.usdcAmount
-    );
+    let verification;
+
+    if (simulatedMode) {
+      // In simulated testing mode (for demo without real gas faucet delay)
+      verification = {
+        verified: true,
+        txHash,
+        senderAddress: '0xSimulatedCustomerWallet00000000000000001',
+        recipientAddress: merchant.walletAddress,
+        amount: order.usdcAmount,
+        blockNumber: 19854210,
+        tokenContract: CHAIN_CONFIG.usdcContractAddress,
+      };
+    } else {
+      // Verify against Base Sepolia RPC
+      verification = await BlockchainPaymentVerifier.verifyPayment(
+        txHash as `0x${string}`,
+        merchant.walletAddress,
+        order.usdcAmount
+      );
+    }
 
     if (!verification.verified) {
       // Mark as failed in order if fatal or keep pending for retry

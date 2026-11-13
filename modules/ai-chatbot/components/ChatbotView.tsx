@@ -51,7 +51,7 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
     setLoading(true);
 
     try {
-      const history = messages.slice(-20).map(m => ({
+      const history = messages.map(m => ({
         role: m.sender,
         content: m.text,
       }));
@@ -188,7 +188,6 @@ export function ChatbotView({ merchantId }: { merchantId: string }) {
         <Input
           placeholder="Ask a question about your payments, balance or orders..."
           value={input}
-          maxLength={4000}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
           className="text-xs sm:text-sm"

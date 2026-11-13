@@ -1,22 +1,32 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/database/db';
-import { authorizeMerchant, clearMerchantSession } from '@/lib/auth/session';
-import { createMerchantInputSchema } from '@/lib/validations';
+import { createMerchantInputSchema, getMerchantQuerySchema } from '@/lib/validations';
 
-export async function GET() {
-  const authorization = await authorizeMerchant();
-  if (!authorization.ok) {
-    return NextResponse.json({ error: 'Authentication required.' }, { status: authorization.status });
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const parsed = getMerchantQuerySchema.safeParse({
+    email: searchParams.get('email') || undefined,
+    id: searchParams.get('id') || undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const merchant = await db.getMerchantById(authorization.merchantId);
-  if (!merchant) return NextResponse.json({ error: 'Merchant account not found.' }, { status: 404 });
-  return NextResponse.json({ merchant });
-}
+  const { id, email } = parsed.data;
 
-export async function DELETE() {
-  await clearMerchantSession();
-  return NextResponse.json({ success: true });
+  if (id) {
+    const merchant = await db.getMerchantById(id);
+    return NextResponse.json({ merchant });
+  }
+
+  if (email) {
+    const merchant = await db.getMerchantByEmail(email);
+    return NextResponse.json({ merchant });
+  }
+
+  const all = await db.getAllMerchants();
+  return NextResponse.json({ merchants: all });
 }
 
 export async function POST(request: Request) {
@@ -35,7 +45,7 @@ export async function POST(request: Request) {
 
     const existing = await db.getMerchantByEmail(email);
     if (existing) {
-      return NextResponse.json({ error: 'An account with this email is already registered.' }, { status: 409 });
+      return NextResponse.json({ merchant: existing, isNew: false });
     }
 
     const newMerchant = await db.createMerchant({

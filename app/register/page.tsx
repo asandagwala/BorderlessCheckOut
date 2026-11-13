@@ -35,9 +35,9 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-      router.push('/login');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export default function RegisterPage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-base">Store Details</CardTitle>
             <CardDescription className="text-xs">
-              Configure your business and the wallet that will sign in to manage it
+              Configure your business and Base Sepolia settlement wallet
             </CardDescription>
           </CardHeader>
           <CardContent>

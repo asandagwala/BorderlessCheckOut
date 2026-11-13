@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   Coins, 
@@ -30,65 +30,42 @@ import { TreasuryAgentView } from '@/modules/ai-treasury-agent/components/Treasu
 import { SuppliersAndInvoicesView } from '@/modules/suppliers/components/SuppliersAndInvoicesView';
 import { AuditLogsTable } from '@/modules/audit-logs/components/AuditLogsTable';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 type TabType = 'overview' | 'orders' | 'transactions' | 'treasury-agent' | 'suppliers' | 'chatbot' | 'audit-logs';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [merchantId, setMerchantId] = useState('');
+  const [merchantId, setMerchantId] = useState('merch_kigali_01');
+  const [merchantsList, setMerchantsList] = useState<any[]>([]);
   const [statsData, setStatsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Fetch merchants and dashboard stats
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const authRes = await fetch('/api/auth', { cache: 'no-store' });
-      if (!authRes.ok) {
-        router.replace('/login');
-        return;
-      }
-
-      const auth = await authRes.json();
-      const currentMerchantId = auth.merchant?.id;
-      if (!currentMerchantId) {
-        router.replace('/login');
-        return;
-      }
-
-      setMerchantId(currentMerchantId);
-      const statsRes = await fetch(`/api/dashboard/stats?merchantId=${encodeURIComponent(currentMerchantId)}`, { cache: 'no-store' });
-      if (statsRes.status === 401 || statsRes.status === 403) {
-        router.replace('/login');
-        return;
-      }
+      const [statsRes, merchRes] = await Promise.all([
+        fetch(`/api/dashboard/stats?merchantId=${merchantId}`),
+        fetch('/api/auth'),
+      ]);
       const stats = await statsRes.json();
+      const merch = await merchRes.json();
       setStatsData(stats);
+      setMerchantsList(merch.merchants || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  };
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, [merchantId]);
 
   const stats = statsData?.stats;
   const merchant = statsData?.merchant;
-
-  const handleLogout = async () => {
-    await fetch('/api/auth', { method: 'DELETE' });
-    router.replace('/login');
-  };
-
-  if (loading && !merchantId) {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">Loading merchant dashboard...</div>;
-  }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
@@ -110,14 +87,22 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right Header Actions: Current Merchant & Create Order */}
+          {/* Right Header Actions: Merchant Switcher & Create Order */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg text-xs font-medium text-zinc-800 dark:text-zinc-200">
+            <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
               <Building2 className="w-3.5 h-3.5 text-zinc-500 ml-1.5" />
-              <span>{merchant?.businessName || 'Merchant account'}</span>
+              <select
+                value={merchantId}
+                onChange={(e) => setMerchantId(e.target.value)}
+                className="bg-transparent text-xs font-medium text-zinc-800 dark:text-zinc-200 border-none focus:outline-none pr-2 cursor-pointer"
+              >
+                {merchantsList.map((m) => (
+                  <option key={m.id} value={m.id} className="bg-white dark:bg-zinc-900">
+                    {m.businessName}
+                  </option>
+                ))}
+              </select>
             </div>
-
-            <Button size="sm" variant="outline" onClick={handleLogout} className="text-xs">Sign out</Button>
 
             <Button
               size="sm"

@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Building2, Loader2, ShieldCheck } from 'lucide-react';
+import { Building2, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('merchant@kigalifresh.rw');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,42 +20,17 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const challengeRes = await fetch('/api/auth/challenge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const challenge = await challengeRes.json();
-      if (!challengeRes.ok) throw new Error(challenge.error || 'Could not start wallet sign-in.');
+      const res = await fetch(`/api/auth?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
 
-      const ethereum = (window as Window & {
-        ethereum?: { request: (args: { method: string; params?: string[] }) => Promise<unknown> };
-      }).ethereum;
-      if (!ethereum) throw new Error('Install a browser wallet to sign in.');
-
-      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-      const walletAddress = Array.isArray(accounts) && typeof accounts[0] === 'string' ? accounts[0] : undefined;
-      if (!walletAddress || walletAddress.toLowerCase() !== challenge.walletAddress.toLowerCase()) {
-        throw new Error('Connect the wallet registered to this merchant account.');
+      if (data.merchant) {
+        // Successful login
+        router.push('/dashboard');
+      } else {
+        setError('Merchant account not found. Please register or check your email.');
       }
-
-      const signature = await ethereum.request({
-        method: 'personal_sign',
-        params: [challenge.message, walletAddress],
-      });
-      if (typeof signature !== 'string') throw new Error('The wallet returned an invalid signature.');
-
-      const verifyRes = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ signature }),
-      });
-      const verification = await verifyRes.json();
-      if (!verifyRes.ok) throw new Error(verification.error || 'Wallet sign-in failed.');
-
-      router.push('/dashboard');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -76,14 +51,14 @@ export default function LoginPage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-base">Sign In</CardTitle>
             <CardDescription className="text-xs">
-              Sign a login message with the wallet registered to your merchant account
+              Enter your registered merchant email to authenticate
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300 block mb-1">
-                  Merchant Account Email
+                  Merchant Email Address
                 </label>
                 <Input
                   type="email"
@@ -106,12 +81,32 @@ export default function LoginPage() {
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-4"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                Sign In with Wallet
+                Sign In to Merchant Dashboard
               </Button>
             </form>
+
+            <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
+              <span className="text-xs text-zinc-500 block mb-2">Preset Demo Merchants:</span>
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEmail('merchant@kigalifresh.rw')}
+                  className="px-2 py-1 text-[11px] rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                >
+                  Kigali Fresh Market
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEmail('finance@capeartisans.co.za')}
+                  className="px-2 py-1 text-[11px] rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                >
+                  Cape Artisans
+                </button>
+              </div>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-center border-t border-zinc-100 dark:border-zinc-800 pt-4 text-xs text-zinc-500">
-            Don&apos;t have an account?{' '}
+            Don't have an account?{' '}
             <Link href="/register" className="font-semibold text-emerald-600 hover:underline ml-1">
               Register store
             </Link>

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { TreasuryAgentService } from '@/modules/ai-treasury-agent/treasury-agent.service';
 import { treasuryAgentActionSchema } from '@/lib/validations';
-import { authorizeMerchant } from '@/lib/auth/session';
 
 export async function POST(request: Request) {
   try {
@@ -16,23 +15,19 @@ export async function POST(request: Request) {
     }
 
     const { merchantId, action, invoiceId } = result.data;
-    const authorization = await authorizeMerchant(merchantId);
-    if (!authorization.ok) {
-      return NextResponse.json({ error: 'Authentication required or merchant access denied.' }, { status: authorization.status });
-    }
 
     if (action === 'RUN_SCENARIO_1') {
-      const scenarioResult = await TreasuryAgentService.runScenario1Approved(authorization.merchantId);
+      const scenarioResult = await TreasuryAgentService.runScenario1Approved(merchantId);
       return NextResponse.json(scenarioResult);
     }
 
     if (action === 'RUN_SCENARIO_2') {
-      const scenarioResult = await TreasuryAgentService.runScenario2Rejected(authorization.merchantId);
+      const scenarioResult = await TreasuryAgentService.runScenario2Rejected(merchantId);
       return NextResponse.json(scenarioResult);
     }
 
     if (action === 'RUN_INVOICE' && invoiceId) {
-      const invoiceResult = await TreasuryAgentService.runWorkflowForInvoice(authorization.merchantId, invoiceId);
+      const invoiceResult = await TreasuryAgentService.runWorkflowForInvoice(merchantId, invoiceId);
       return NextResponse.json(invoiceResult);
     }
 

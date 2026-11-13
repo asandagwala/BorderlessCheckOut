@@ -13,11 +13,10 @@ export const getMerchantQuerySchema = z.object({
 });
 
 // Order Schemas
-export const createOrderInputSchema = z.object({
+export const createOrderInputSchema = z.strictObject({
   merchantId: z.string().min(1, 'merchantId is required'),
   customerReference: z.string().min(1, 'customerReference is required'),
   orderAmountZar: z.union([z.number(), z.string()]).transform(val => Number(val)).pipe(z.number().positive('Order amount must be positive')),
-  usdcAmount: z.union([z.number(), z.string()]).optional().transform(val => val !== undefined ? Number(val) : undefined),
 });
 
 export const getOrdersQuerySchema = z.object({
@@ -25,10 +24,9 @@ export const getOrdersQuerySchema = z.object({
 });
 
 // Checkout Verification Schema
-export const verifyPaymentInputSchema = z.object({
+export const verifyPaymentInputSchema = z.strictObject({
   orderId: z.string().min(1, 'orderId is required'),
   txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'txHash must be a valid 32-byte hex string (0x...)'),
-  simulated: z.boolean().optional().default(false),
 });
 
 // AI Chatbot Schema

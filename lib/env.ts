@@ -14,7 +14,15 @@ const envSchema = z.object({
 });
 
 const parsed = envSchema.safeParse(process.env);
-const rawEnv = parsed.success ? parsed.data : envSchema.parse({});
+if (!parsed.success) {
+  const issues = parsed.error.issues
+    .map(issue => `${issue.path.join('.') || 'environment'}: ${issue.message}`)
+    .join('; ');
+
+  throw new Error(`Invalid environment configuration: ${issues}`);
+}
+
+const rawEnv = parsed.data;
 
 export const ENV = {
   BASE_SEPOLIA_CHAIN_ID: rawEnv.NEXT_PUBLIC_BASE_CHAIN_ID,

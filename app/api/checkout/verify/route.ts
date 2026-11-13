@@ -14,12 +14,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { orderId, txHash, simulated } = result.data;
+    const { orderId, txHash } = result.data;
 
     const recon = await ReconciliationService.reconcileOrderPayment(
       orderId,
-      txHash,
-      simulated
+      txHash
     );
 
     if (!recon.success) {

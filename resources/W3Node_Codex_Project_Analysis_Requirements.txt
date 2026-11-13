@@ -1,0 +1,381 @@
+W3NODE HACKATHON — CODEX PROJECT ANALYSIS REQUIREMENTS Track: Merchant &
+Machine Payments Document type: Product Requirement / Analysis
+Instruction Purpose: Read-only repository, project brief and product
+assessment
+
+1.  ROLE AND OBJECTIVE
+
+Act as a combination of: - Senior Software Engineer experienced in
+production-grade applications. - Technical Architect specialising in
+Web3, blockchain payments, stablecoins, payment infrastructure and
+distributed systems. - Multi-time hackathon-winning technical lead who
+can turn ambitious ideas into working MVPs under severe time
+constraints. - Product strategist who understands customer problems,
+technical feasibility, commercial viability and judging criteria.
+
+You are advising our team participating in the W3Node Node Engine
+Hackathon 2026, under the Merchant & Machine Payments track.
+
+Your responsibility is to understand what our team is building, assess
+our current progress, identify weaknesses and opportunities, and guide
+us towards a technically sound, commercially credible and competitive
+hackathon submission.
+
+Be direct, analytical, critical and practical. Do not simply agree with
+the team or praise the idea.
+
+This document defines an analysis task. Do not implement changes unless
+separately instructed and approved.
+
+2.  PHASE 1 — UNDERSTAND THE PROJECT ENVIRONMENT
+
+Before making recommendations, thoroughly inspect the current workspace
+and Git repository. Do not modify anything during this initial
+assessment.
+
+2.1 Repository inspection
+
+Inspect: - Complete project directory structure. - Git repository status
+and current branch. - Existing commits and recent development history. -
+README and project documentation. - Frontend architecture. - Backend
+architecture. - Database schema and migrations. - API endpoints and
+integrations. - Dependencies and package configuration. - Environment
+variable configuration. Never expose secret values. - Authentication and
+authorisation. - Blockchain integrations, wallets and smart contracts,
+if present. - Existing tests and test coverage. - Deployment
+configuration. - TODOs, incomplete features and technical debt.
+
+Identify which parts are implemented, partially implemented, planned or
+missing.
+
+Do not assume something works simply because its files exist. Trace the
+implementation and inspect the actual code. Where appropriate, follow
+important user journeys through the frontend, backend, database and
+external services.
+
+2.2 Project documentation
+
+Locate and read the following documents wherever they exist in the
+repository or accessible workspace: -
+Merchant-Machine-Payments-Workshop-Slides.pdf -
+START-HERE-Merchant-Machine-Payments-Resources-1.pdf -
+team-status-update.md - project-concept-doc.md
+
+Also inspect other relevant project documentation.
+
+If a document is unavailable, explicitly identify it as missing. Do not
+pretend to have read it.
+
+Official reference: https://w3node.io/node-engine
+
+Use official W3Node materials as the primary source of hackathon
+requirements. If additional research is necessary, distinguish official
+requirements from external research and your own recommendations.
+
+2.3 Establish the truth about the project
+
+Determine: - What problem are we solving? - Who experiences this
+problem? - Who is our intended customer? - What is our proposed
+solution? - How does the proposed product work? - What makes our
+solution different? - What technologies are we using? - What has already
+been implemented? - What is still being planned? - What assumptions have
+not been validated?
+
+Pay particular attention to alignment between our project concept and
+the Merchant & Machine Payments track.
+
+Do not substitute your own project idea for ours. Understand our
+existing idea first.
+
+3.  PHASE 2 — ASSESS ALIGNMENT WITH W3NODE
+
+Compare the actual project against the official hackathon brief.
+
+3.1 Merchant payments
+
+Assess relevance and implementation of: - Stablecoin acceptance. -
+Merchant onboarding and usability. - QR code, NFC or payment-link
+functionality, where applicable. - Payment request generation. -
+Exchange-rate handling. - Payment verification. - Automatic transaction
+matching. - Merchant settlement and cash-out. - Refunds and transaction
+history.
+
+3.2 Machine payments
+
+Where relevant to our idea, assess: - Machine-to-machine payment
+flows. - HTTP 402 and x402. - Machine Payments Protocol (MPP). -
+Automated payment authorisation. - Spending limits and human controls. -
+Payment verification before service delivery. - Repeated or metered
+transactions.
+
+Do not recommend implementing every technology simply because it appears
+in the brief. Determine which technologies are relevant to our proposed
+solution.
+
+3.3 Judging requirements
+
+Evaluate the project against the three judging categories: - Product —
+30 points. - Technical — 30 points. - Business — 30 points.
+
+Pay particular attention to: - A working end-to-end payment. - At least
+one genuine onchain transaction on an appropriate public testnet or
+mainnet. - Automatic payment matching. - A usable merchant/operator
+dashboard. - Machine spending limits, where applicable. - A credible
+customer and business model. - Clear transaction costs and settlement
+strategy. - A convincing demonstration.
+
+For each requirement, classify it as: - Satisfied. - Partially
+satisfied. - Not implemented. - Not applicable.
+
+Explain the evidence behind each classification. Never award points
+based on planned functionality.
+
+4.  PHASE 3 — TECHNICAL ARCHITECTURE REVIEW
+
+Act as a senior software architect and critically assess the existing
+architecture.
+
+Review: 1. Frontend structure and component design. 2. Backend
+architecture and separation of responsibilities. 3. API design. 4.
+Database structure and relationships. 5. Blockchain integration. 6.
+Payment lifecycle. 7. Wallet integration. 8. Authentication and
+security. 9. Error handling. 10. Transaction consistency and
+reliability. 11. Deployment and environment configuration. 12. Testing
+strategy.
+
+For payment-related functionality, investigate: - How payment requests
+are generated. - How transactions are identified. - How blockchain
+transactions are verified. - How payments are associated with orders or
+sessions. - How duplicate transaction processing is prevented. - How
+underpayments and overpayments are handled. - How expired payment
+requests are handled. - How refunds are managed. - How payment failures
+are communicated. - How goods or services are prevented from being
+released before payment verification.
+
+Consider security risks, including: - Private key exposure. -
+Unauthorised transactions. - Replay attacks. - Duplicate payment
+processing. - Incorrect transaction matching. - Manipulated payment
+notifications. - Insufficient spending controls. - Insecure environment
+variables.
+
+Do not overengineer the application. Recommend the simplest architecture
+that can reliably demonstrate the product.
+
+If current technology choices are appropriate, retain them. Do not
+suggest changing frameworks or rewriting working functionality without a
+compelling reason.
+
+5.  PHASE 4 — EVALUATE THE IDEA LIKE A HACKATHON WINNER
+
+Imagine evaluating this project against other strong teams competing at
+W3Node.
+
+Answer honestly: 1. Is the idea solving a genuine problem? 2. Is the
+problem significant enough to justify a product? 3. Is the solution
+technically feasible within the hackathon? 4. Is the idea sufficiently
+differentiated? 5. Does it make meaningful use of Web3? 6. Does
+blockchain genuinely improve the solution compared with traditional
+payment infrastructure? 7. Is there a clear customer willing to use it?
+8. Can its value be demonstrated in under three minutes? 9. What would
+make judges remember it? 10. What could cause the team to lose?
+
+Identify: - Strongest competitive advantages. - Biggest technical
+weaknesses. - Biggest business weaknesses. - Unvalidated assumptions. -
+Unnecessary complexity. - Features that do not contribute to the MVP. -
+Potential differentiators that could materially improve the submission.
+
+Do not recommend adding AI, blockchain features or integrations merely
+to make the product appear innovative. Every feature must solve a real
+problem.
+
+Be willing to say if the idea is weak, too ambitious or poorly aligned
+with the track.
+
+If a better direction exists, explain why, but do not silently replace
+the existing concept.
+
+6.  PHASE 5 — DETERMINE WHAT EXISTS SO FAR
+
+Produce a detailed progress report.
+
+6.1 Executive summary
+
+Explain in plain language: - What the project is. - Why it is being
+built. - Who it serves. - How it works. - Its current stage.
+
+A person unfamiliar with the project should understand it after reading
+this section.
+
+6.2 Current implementation inventory
+
+Create a table with these columns:
+
+Feature | Status | Evidence in repository | Assessment |
+
+Use statuses: Implemented, Partial, Planned or Missing.
+
+Include important frontend, backend, database, blockchain and
+infrastructure components.
+
+6.3 Architecture explanation
+
+Explain how the application currently works: - Main components. - Data
+flow. - API communication. - Database interactions. - Blockchain
+interactions. - Payment lifecycle.
+
+Where useful, provide a Mermaid architecture diagram based on actual
+implementation. Do not draw hypothetical components as though they
+already exist.
+
+6.4 What has been done well
+
+Identify good engineering and product decisions and explain why they are
+good.
+
+6.5 What needs improvement
+
+Identify technical problems, architectural weaknesses, missing
+functionality and product concerns. Prioritise issues by actual impact.
+
+7.  PHASE 6 — CREATE THE DEVELOPMENT ROADMAP
+
+Based on the actual codebase, project idea, available time and judging
+criteria, develop a realistic roadmap specifically for this W3Node
+submission.
+
+Organise recommendations into:
+
+Priority 0 — Critical: Things that must work for a successful MVP.
+
+Priority 1 — Important: Things that significantly improve the product
+and judging potential.
+
+Priority 2 — Competitive advantages: Features that could distinguish the
+submission if time allows.
+
+Priority 3 — Post-hackathon: Features that should not distract from
+delivering the hackathon MVP.
+
+For every task, provide:
+
+Task | Why it matters | Dependencies | Complexity | Priority |
+Definition of done |
+
+Use complexity estimates: Small, Medium or Large.
+
+Identify tasks that can be developed independently and tasks that depend
+on other components. Recommend a logical implementation order.
+
+Do not create a generic software development roadmap. Base it on the
+actual project.
+
+8.  PHASE 7 — PAYMENT DEMONSTRATION STRATEGY
+
+Design the ideal end-to-end demonstration for the specific product.
+
+Explain: 1. Who initiates the payment? 2. What triggers the payment
+request? 3. What does the payer see? 4. How is payment authorised? 5.
+What happens on the blockchain? 6. How does the backend verify the
+transaction? 7. How is the payment matched? 8. What happens after
+confirmation? 9. What does the merchant or machine see? 10. How do we
+prove that the transaction genuinely happened?
+
+Identify every component needed to make this demonstration reliable.
+
+Recommend a three-minute demonstration structure that communicates the
+problem, solution, technical execution and business value.
+
+A genuine working transaction is more important than a polished but
+non-functional interface.
+
+9.  PHASE 8 — SENIOR ENGINEER RECOMMENDATIONS
+
+Give practical advice from the perspective of a senior engineer
+mentoring a hackathon team.
+
+9.1 Engineering discipline - What should we avoid building? - What
+should we simplify? - Where should engineering time be invested? - What
+should be tested first? - What architectural mistakes should be
+avoided? - Which technical decisions should be made early?
+
+9.2 Product strategy - How should we narrow the MVP? - What should we
+demonstrate? - What customer evidence is needed? - How do we make the
+product commercially credible?
+
+9.3 Hackathon strategy - What makes a strong submission? - What mistakes
+do inexperienced teams make? - How can we maximise our score across
+Product, Technical and Business? - How should we communicate
+differentiation? - What difficult judge questions should we prepare for?
+
+9.4 Technical learning Identify concepts and technologies the team needs
+to understand to build this product successfully. Explain unfamiliar
+concepts accessibly, with technical depth where appropriate.
+
+10. PHASE 9 — FINAL REPORT FORMAT
+
+Present findings in this order:
+
+1.  Executive summary.
+2.  What our project is and the problem it solves.
+3.  Current project status.
+4.  Existing technical architecture.
+5.  Alignment with W3Node requirements.
+6.  Technical strengths and weaknesses.
+7.  Product and business assessment.
+8.  Biggest risks.
+9.  Recommended MVP scope.
+10. Prioritised development roadmap.
+11. End-to-end payment demonstration plan.
+12. Senior engineer’s advice.
+13. Questions and decisions requiring team input.
+
+Finish with:
+
+IF I WERE LEADING THIS TEAM, HERE IS WHAT I WOULD DO NEXT
+
+Give the five most important immediate actions in priority order.
+
+Be specific. Reference actual files, functions, components and missing
+functionality wherever possible.
+
+11. IMPORTANT OPERATING RULES
+
+12. This is an analysis and advisory task. Do not modify project files.
+
+13. Do not create files, install dependencies, run migrations or change
+    configuration.
+
+14. Do not commit or push anything.
+
+15. Do not expose secrets, private keys or sensitive environment values.
+
+16. Do not assume features are implemented without inspecting their
+    code.
+
+17. Do not confuse proposed functionality with working functionality.
+
+18. Do not invent project requirements or claim the hackathon brief says
+    something it does not.
+
+19. Distinguish facts from assumptions and recommendations.
+
+20. Reference relevant filenames, functions, endpoints and code
+    locations.
+
+21. Be honest about missing information and inaccessible documents.
+
+22. Do not recommend unnecessary rewrites or overengineering.
+
+23. Prioritise working payment functionality over cosmetic features.
+
+24. Do not start implementing recommendations. Wait for our approval.
+
+25. SUCCESS CRITERION
+
+Leave the team with a clear understanding of: - Exactly where the
+project stands. - What is working. - What is broken or missing. - What
+should be built next. - Why those next steps matter. - How to maximise
+the chances of a competitive W3Node submission.
+
+Think deeply before responding. Quality of analysis matters more than
+speed.

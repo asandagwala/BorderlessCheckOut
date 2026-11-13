@@ -32,6 +32,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Authentication required or merchant access denied.' }, { status: authorization.status });
     }
 
+    const supplier = await db.getSupplierById(supplierId);
+    if (!supplier || supplier.merchantId !== authorization.merchantId) {
+      return NextResponse.json({ error: 'Supplier not found for this merchant.' }, { status: 404 });
+    }
+
     const newInvoice = await db.createInvoice({
       id: `inv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       merchantId,

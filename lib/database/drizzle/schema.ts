@@ -62,7 +62,7 @@ export const supplierInvoices = pgTable('supplier_invoices', {
   invoiceAmount: numeric('invoice_amount', { precision: 14, scale: 2 }).notNull(),
   currency: varchar('currency', { length: 10 }).default('USDC').notNull(),
   dueDate: timestamp('due_date', { withTimezone: true }).notNull(),
-  paymentStatus: varchar('payment_status', { length: 20 }).default('PENDING').notNull(), // PENDING, PAID, REJECTED, APPROVAL_REQUIRED
+  paymentStatus: varchar('payment_status', { length: 20 }).default('PENDING').notNull(), // PENDING, CONFIRMING, PAID, FAILED, REJECTED, APPROVAL_REQUIRED
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

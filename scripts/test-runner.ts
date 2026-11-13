@@ -1,12 +1,11 @@
 import { db } from '../lib/database/db';
-import { BlockchainPaymentVerifier } from '../modules/blockchain/verifier.service';
 import { ReconciliationService } from '../modules/reconciliation/reconciliation.service';
 import { PolicyEngine } from '../modules/treasury/policy-engine.service';
 import { TreasuryService } from '../modules/treasury/treasury.service';
 import { ChatbotService } from '../modules/ai-chatbot/chatbot.service';
-import { TreasuryAgentService } from '../modules/ai-treasury-agent/treasury-agent.service';
 import { CHAIN_CONFIG } from '../modules/blockchain/config';
 import { getUsdcAmountMismatch } from '../modules/blockchain/verifier.service';
+import { getTreasuryWalletClient } from '../modules/blockchain/viem-client';
 
 async function runTests() {
   if (CHAIN_CONFIG.chain.id !== 84532 || CHAIN_CONFIG.chainId !== CHAIN_CONFIG.chain.id) {
@@ -72,27 +71,83 @@ async function runTests() {
   const unpaidReply = await ChatbotService.handleChatMessage('merch_kigali_01', 'Which orders are still unpaid?');
   console.log('  ✓ Unpaid Orders Query Tool:', unpaidReply.toolUsed);
 
-  // Test 4: AI Treasury Agent - Scenario 1 (Approved $100 Payment)
-  console.log('\nTest 4: AI Treasury Agent - Scenario 1 ($100 Approved Payment)...');
-  const scenario1 = await TreasuryAgentService.runScenario1Approved('merch_kigali_01');
-  console.log('  Decision:', scenario1.decision);
-  console.log('  Executed on chain:', scenario1.executedOnChain);
-  console.log('  Tx Hash:', scenario1.txHash);
-  if (scenario1.decision !== 'APPROVED' || !scenario1.executedOnChain) {
-    throw new Error('Scenario 1 should have been APPROVED and executed');
+  // Test 4: Independent policy approves an eligible invoice without sending funds.
+  console.log('\nTest 4: Treasury policy approves an eligible $100 invoice...');
+  const approvedInvoice = await PolicyEngine.evaluatePaymentProposal('merch_kigali_01', 'inv_demo_approved_100');
+  if (!approvedInvoice.isAllowed || approvedInvoice.decision !== 'APPROVED') {
+    throw new Error('An approved supplier invoice under the review threshold should pass policy');
   }
-  console.log('  ✓ Scenario 1 passed! Steps traced:', scenario1.traces.length);
+  console.log('  ✓ $100 invoice to an approved supplier passes policy; tests do not submit a payout.');
 
-  // Test 5: AI Treasury Agent - Scenario 2 (Rejected $700 Payment Exceeding $500 Cap)
-  console.log('\nTest 5: AI Treasury Agent - Scenario 2 ($700 Rejected Payment)...');
-  const scenario2 = await TreasuryAgentService.runScenario2Rejected('merch_kigali_01');
-  console.log('  Decision:', scenario2.decision);
-  console.log('  Executed on chain:', scenario2.executedOnChain);
-  console.log('  Reason:', scenario2.reason);
-  if (scenario2.decision !== 'REJECTED' || scenario2.executedOnChain) {
-    throw new Error('Scenario 2 should have been REJECTED by policy engine');
+  if (!getTreasuryWalletClient()) {
+    const unavailableBalance = await TreasuryService.getTreasuryBalance('merch_kigali_01');
+    if (unavailableBalance.currentBalanceUsdc !== 0) {
+      throw new Error('Treasury balance must not include a simulated starting buffer');
+    }
+    const noSignerResult = await TreasuryService.executeSupplierPaymentProposal(
+      'merch_kigali_01',
+      'inv_demo_approved_100',
+      'TEST_NO_SIGNER'
+    );
+    const invoiceAfterNoSignerAttempt = await db.getInvoiceById('inv_demo_approved_100');
+    if (noSignerResult.success || noSignerResult.txHash || invoiceAfterNoSignerAttempt?.paymentStatus !== 'PENDING') {
+      throw new Error('A supplier payout without a configured signer must not create a fake tx or mark the invoice paid');
+    }
+    console.log('  ✓ No signer means zero reported treasury funds and no simulated supplier payout.');
   }
-  console.log('  ✓ Scenario 2 passed! Blocked from blockchain. Steps traced:', scenario2.traces.length);
+
+  // Test 5: Spending limit blocks a $700 invoice.
+  console.log('\nTest 5: Treasury policy rejects a $700 invoice...');
+  const rejectedInvoice = await PolicyEngine.evaluatePaymentProposal('merch_kigali_01', 'inv_demo_rejected_700');
+  if (rejectedInvoice.isAllowed || rejectedInvoice.decision !== 'REJECTED') {
+    throw new Error('An invoice above the spending cap must be rejected');
+  }
+  console.log('  ✓ $700 invoice is rejected by the $500 policy limit.');
+
+  // Test 5b: Dual-control threshold is a hard stop until human approval.
+  const reviewInvoice = await db.createInvoice({
+    id: 'inv_test_dual_control',
+    supplierId: 'supp_cape_agro_01',
+    merchantId: 'merch_kigali_01',
+    invoiceNumber: 'INV-TEST-DUAL-CONTROL',
+    invoiceAmount: 350,
+    currency: 'USDC',
+    dueDate: new Date(Date.now() + 86400000).toISOString(),
+    paymentStatus: 'PENDING',
+    createdAt: new Date().toISOString(),
+  });
+  const reviewResult = await TreasuryService.executeSupplierPaymentProposal('merch_kigali_01', reviewInvoice.id);
+  const reviewedInvoice = await db.getInvoiceById(reviewInvoice.id);
+  if (reviewResult.success || reviewResult.txHash || reviewResult.decision !== 'REQUIRES_APPROVAL' || reviewedInvoice?.paymentStatus !== 'APPROVAL_REQUIRED') {
+    throw new Error('An invoice above the dual-control threshold must not execute without human approval');
+  }
+  console.log('  ✓ $350 invoice is flagged for approval and no transaction is submitted.');
+
+  // Test 5c: A merchant cannot pay through another merchant's supplier record.
+  await db.createSupplier({
+    id: 'supp_test_foreign',
+    merchantId: 'merch_foreign_test',
+    supplierName: 'Foreign Supplier',
+    walletAddress: '0x2546BcD3c84621e976D8185a91A922aE77ECEc30',
+    approvalStatus: 'APPROVED',
+    createdAt: new Date().toISOString(),
+  });
+  const foreignSupplierInvoice = await db.createInvoice({
+    id: 'inv_test_foreign_supplier',
+    supplierId: 'supp_test_foreign',
+    merchantId: 'merch_kigali_01',
+    invoiceNumber: 'INV-TEST-FOREIGN-SUPPLIER',
+    invoiceAmount: 100,
+    currency: 'USDC',
+    dueDate: new Date(Date.now() + 86400000).toISOString(),
+    paymentStatus: 'PENDING',
+    createdAt: new Date().toISOString(),
+  });
+  const foreignSupplierDecision = await PolicyEngine.evaluatePaymentProposal('merch_kigali_01', foreignSupplierInvoice.id);
+  if (foreignSupplierDecision.isAllowed || foreignSupplierDecision.decision !== 'REJECTED') {
+    throw new Error('A merchant must not pay an invoice linked to another merchant\'s supplier');
+  }
+  console.log('  ✓ Cross-merchant supplier invoice is rejected.');
 
   // Test 6: Audit Log Integrity
   console.log('\nTest 6: Audit Log Verification...');

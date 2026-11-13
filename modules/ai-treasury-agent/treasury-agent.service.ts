@@ -75,7 +75,12 @@ export class TreasuryAgentService {
     // Step 2: Check treasury balance
     addTrace('BALANCE_CHECK', 'Querying merchant treasury liquidity on Base Sepolia...');
     const balance = await TreasuryService.getTreasuryBalance(merchantId);
-    addTrace('BALANCE_VERIFIED', `Available treasury liquidity: $${balance.currentBalanceUsdc.toFixed(2)} USDC (Sufficient for $${amount.toFixed(2)}).`, 'success');
+    const hasSufficientBalance = balance.currentBalanceUsdc >= amount;
+    addTrace(
+      hasSufficientBalance ? 'BALANCE_VERIFIED' : 'BALANCE_INSUFFICIENT',
+      `On-chain treasury wallet balance: $${balance.currentBalanceUsdc.toFixed(2)} USDC; invoice requires $${amount.toFixed(2)} USDC.`,
+      hasSufficientBalance ? 'success' : 'warning'
+    );
 
     // Step 3: Check supplier approval status
     addTrace('SUPPLIER_VERIFICATION', `Verifying vendor '${supplierName}' in approved suppliers registry...`);
@@ -116,12 +121,16 @@ export class TreasuryAgentService {
         `Policy engine APPROVED payment. Executed on Base Sepolia! Tx Hash: ${executionResult.txHash}`,
         'success'
       );
-    } else {
+    } else if (executionResult.decision === 'REQUIRES_APPROVAL') {
+      addTrace('HUMAN_APPROVAL_REQUIRED', executionResult.reason, 'warning');
+    } else if (executionResult.decision === 'REJECTED') {
       addTrace(
         'EXECUTION_BLOCKED',
-        `Policy engine REJECTED payment: "${executionResult.reason}". On-chain transaction was BLOCKED.`,
+        `Policy engine rejected the proposal: "${executionResult.reason}". On-chain transaction was blocked.`,
         'error'
       );
+    } else {
+      addTrace('EXECUTION_FAILED', executionResult.reason, 'error');
     }
 
     return {
@@ -144,7 +153,7 @@ export class TreasuryAgentService {
    */
   static async runScenario1Approved(merchantId: string): Promise<TreasuryAgentRunResult> {
     const invoices = await db.getInvoicesByMerchantId(merchantId);
-    let target = invoices.find(i => i.invoiceAmount === 100 && i.paymentStatus !== 'PAID');
+    let target = invoices.find(i => i.invoiceAmount === 100 && i.paymentStatus === 'PENDING');
     if (!target) {
       // Re-create or reset if already consumed in earlier run
       const supp = (await db.getSuppliersByMerchantId(merchantId)).find(s => s.approvalStatus === 'APPROVED');
@@ -168,7 +177,7 @@ export class TreasuryAgentService {
    */
   static async runScenario2Rejected(merchantId: string): Promise<TreasuryAgentRunResult> {
     const invoices = await db.getInvoicesByMerchantId(merchantId);
-    let target = invoices.find(i => i.invoiceAmount === 700 && i.paymentStatus !== 'PAID');
+    let target = invoices.find(i => i.invoiceAmount === 700 && i.paymentStatus === 'PENDING');
     if (!target) {
       const supp = (await db.getSuppliersByMerchantId(merchantId)).find(s => s.approvalStatus === 'APPROVED');
       target = await db.createInvoice({

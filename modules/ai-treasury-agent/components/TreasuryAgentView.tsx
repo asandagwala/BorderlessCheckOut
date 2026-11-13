@@ -68,7 +68,7 @@ export function TreasuryAgentView({
           </div>
           <p className="text-xs text-zinc-400 mt-1 max-w-2xl">
             Demonstrates controlled financial automation using Claude API tool calling and an independent policy engine. 
-            The agent proposes payments, but only passes execution if strictly within pre-configured spending limits ($500.00).
+            The agent proposes payments; independent policy checks and a confirmed Base Sepolia transfer are both required before an invoice is marked paid.
           </p>
         </div>
         <div className="flex items-center gap-2 bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-xs">
@@ -90,7 +90,7 @@ export function TreasuryAgentView({
               Authorized Supplier Settlement
             </CardTitle>
             <CardDescription className="text-xs">
-              Supplier is approved ("Cape Agro Packaging"), balance is sufficient, and invoice ($100) is well within $500 spending limit.
+              The approved supplier's $100 invoice is within policy limits. Settlement requires a configured, funded treasury wallet.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0 space-y-3">
@@ -98,7 +98,7 @@ export function TreasuryAgentView({
               <li>✓ Vendor: Cape Agro Packaging Ltd (Status: APPROVED)</li>
               <li>✓ Proposed Amount: $100.00 USDC (Limit: $500.00)</li>
               <li>✓ Policy Engine: APPROVES</li>
-              <li>✓ Execution: Submitted to Base Sepolia testnet</li>
+              <li>✓ Settlement: Paid only after Base Sepolia confirms the transfer</li>
             </ul>
             <Button
               onClick={() => runScenario('SCENARIO_1')}
@@ -186,7 +186,7 @@ export function TreasuryAgentView({
             ) : (
               <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
                 <ShieldAlert className="w-4 h-4" />
-                <span>Policy Violation Blocked</span>
+                <span>{result.decision === 'REQUIRES_APPROVAL' ? 'Human Approval Required' : result.decision === 'REJECTED' ? 'Blocked by Policy' : 'Settlement Not Confirmed'}</span>
               </div>
             )}
           </CardHeader>

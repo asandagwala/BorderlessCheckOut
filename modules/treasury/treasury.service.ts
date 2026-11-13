@@ -1,9 +1,10 @@
 import { db } from '@/lib/database/db';
 import { PolicyEngine } from './policy-engine.service';
-import { getTreasuryWalletClient } from '@/modules/blockchain/viem-client';
+import { getTreasuryWalletClient, publicClient } from '@/modules/blockchain/viem-client';
 import { CHAIN_CONFIG, ERC20_ABI } from '@/modules/blockchain/config';
+import { BlockchainPaymentVerifier } from '@/modules/blockchain/verifier.service';
 import { AgentAuditLog, Transaction } from '@/lib/database/types';
-import { parseUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 
 export interface TreasuryExecutionResult {
   success: boolean;
@@ -41,9 +42,18 @@ export class TreasuryService {
       }
     }
 
-    // Default base treasury buffer if new store
-    const baseBuffer = 2000.00;
-    const currentBalanceUsdc = baseBuffer + totalReceivedUsdc - totalDisbursedUsdc;
+    // Treasury liquidity comes from the configured treasury wallet on Base Sepolia.
+    // Do not report a seeded buffer as spendable funds.
+    const signer = getTreasuryWalletClient();
+    const balanceUnits = signer
+      ? await publicClient.readContract({
+          address: CHAIN_CONFIG.usdcContractAddress,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [signer.account.address],
+        })
+      : BigInt(0);
+    const currentBalanceUsdc = Number(formatUnits(balanceUnits, CHAIN_CONFIG.usdcDecimals));
     const indicativeZarValue = currentBalanceUsdc * 18.50;
 
     return {
@@ -74,8 +84,11 @@ export class TreasuryService {
     const supplierName = supplier?.supplierName || 'Unknown Supplier';
     const supplierWallet = supplier?.walletAddress || '0x0000000000000000000000000000000000000000';
 
-    // If policy rejected the payment (e.g. limit exceeded or unapproved supplier)
-    if (!evaluation.isAllowed) {
+    const writeAuditLog = async (
+      executionStatus: AgentAuditLog['executionStatus'],
+      policyReason: string,
+      txHash: string | null = null
+    ) => {
       const auditLog: AgentAuditLog = {
         id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         merchantId,
@@ -84,15 +97,24 @@ export class TreasuryService {
         supplier: supplierName,
         supplierWallet,
         policyDecision: evaluation.decision,
-        policyReason: evaluation.reason,
-        executionStatus: 'BLOCKED',
-        txHash: null,
+        policyReason,
+        executionStatus,
+        txHash,
         timestamp: new Date().toISOString(),
       };
-
       await db.createAuditLog(auditLog);
+      return auditLog;
+    };
+
+    // If policy rejected the payment (e.g. limit exceeded or unapproved supplier)
+    if (!evaluation.isAllowed) {
+      const requiresApproval = evaluation.decision === 'REQUIRES_APPROVAL';
+      const auditLog = await writeAuditLog(
+        requiresApproval ? 'PENDING_APPROVAL' : 'BLOCKED',
+        evaluation.reason
+      );
       if (invoice) {
-        await db.updateInvoiceStatus(invoice.id, 'REJECTED');
+        await db.updateInvoiceStatus(invoice.id, requiresApproval ? 'APPROVAL_REQUIRED' : 'REJECTED');
       }
 
       return {
@@ -107,71 +129,99 @@ export class TreasuryService {
       };
     }
 
-    // 2. Policy passed: Attempt blockchain execution on Base Sepolia
-    let txHash: string | null = null;
-    let executionStatus: 'EXECUTED' | 'FAILED' = 'EXECUTED';
-    let executionNote = '';
-
+    // 2. Policy passed: only submit a real Base Sepolia transaction.
     const signer = getTreasuryWalletClient();
-    if (signer && supplier?.walletAddress) {
-      try {
-        const units = parseUnits(amount.toString(), CHAIN_CONFIG.usdcDecimals);
-        const hash = await signer.client.writeContract({
-          address: CHAIN_CONFIG.usdcContractAddress,
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [supplier.walletAddress as `0x${string}`, units],
-        });
-        txHash = hash;
-        executionNote = 'Executed live on Base Sepolia blockchain.';
-      } catch (err: any) {
-        console.warn('Live Base Sepolia on-chain submission fallback:', err.message);
-        // Fallback realistic testnet transaction hash for demonstration
-        txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-        executionNote = 'Executed with Base Sepolia testnet reference hash.';
-      }
-    } else {
-      // Deterministic realistic testnet transaction hash for simulation demo
-      txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-      executionNote = 'Executed with testnet transaction hash.';
-    }
-
-    // 3. Record transaction in database
-    if (invoice && supplier) {
-      const payoutTx: Transaction = {
-        id: `tx_payout_${Date.now()}`,
-        orderId: null,
-        merchantId,
+    const failExecution = async (reason: string, txHash: string | null = null) => {
+      const auditLog = await writeAuditLog('FAILED', reason, txHash);
+      return {
+        success: false,
+        decision: evaluation.decision,
+        reason,
+        invoiceId,
         txHash,
-        tokenContract: CHAIN_CONFIG.usdcContractAddress,
-        senderAddress: '0xTreasuryWalletKigaliFresh00000000000001',
-        recipientAddress: supplier.walletAddress,
         amount,
-        verificationStatus: 'VERIFIED',
-        type: 'SUPPLIER_PAYOUT',
-        blockNumber: 19854300,
-        timestamp: new Date().toISOString(),
-      };
-      await db.createTransaction(payoutTx);
-      await db.updateInvoiceStatus(invoice.id, 'PAID');
-    }
-
-    // 4. Record comprehensive audit log
-    const auditLog: AgentAuditLog = {
-      id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      merchantId,
-      agentAction,
-      proposedAmount: amount,
-      supplier: supplierName,
-      supplierWallet,
-      policyDecision: evaluation.decision,
-      policyReason: `${evaluation.reason} (${executionNote})`,
-      executionStatus: 'EXECUTED',
-      txHash,
-      timestamp: new Date().toISOString(),
+        supplierName,
+        auditLogId: auditLog.id,
+      } satisfies TreasuryExecutionResult;
     };
 
-    await db.createAuditLog(auditLog);
+    if (!signer) {
+      return failExecution('Treasury wallet is not configured. No supplier payment was submitted.');
+    }
+    if (!invoice || !supplier?.walletAddress) {
+      return failExecution('Invoice or approved supplier wallet is unavailable. No supplier payment was submitted.');
+    }
+
+    const units = parseUnits(amount.toString(), CHAIN_CONFIG.usdcDecimals);
+    let balanceUnits: bigint;
+    try {
+      balanceUnits = await publicClient.readContract({
+        address: CHAIN_CONFIG.usdcContractAddress,
+        abi: ERC20_ABI,
+        functionName: 'balanceOf',
+        args: [signer.account.address],
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown RPC error';
+      return failExecution(`Could not verify treasury balance; no payment was submitted: ${message}`);
+    }
+    if (balanceUnits < units) {
+      return failExecution(`Insufficient treasury USDC balance: need ${amount} USDC before submitting this payment.`);
+    }
+
+    let txHash: `0x${string}` | null = null;
+    try {
+      txHash = await signer.client.writeContract({
+        address: CHAIN_CONFIG.usdcContractAddress,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [supplier.walletAddress as `0x${string}`, units],
+      });
+      await db.updateInvoiceStatus(invoice.id, 'CONFIRMING');
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, confirmations: 1 });
+      if (receipt.status !== 'success') {
+        await db.updateInvoiceStatus(invoice.id, 'FAILED');
+        return failExecution(`Supplier payment transaction failed on-chain with status ${receipt.status}.`, txHash);
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown blockchain error';
+      return failExecution(`Live Base Sepolia payment failed or is awaiting confirmation: ${message}`, txHash);
+    }
+
+    if (!txHash) return failExecution('Blockchain provider returned no transaction hash.');
+    const verification = await BlockchainPaymentVerifier.verifyPayment(
+      txHash,
+      supplier.walletAddress,
+      amount
+    );
+    if (!verification.verified) {
+      await db.updateInvoiceStatus(invoice.id, 'FAILED');
+      return failExecution(
+        verification.error || 'On-chain transfer could not be verified. Invoice remains unpaid.',
+        txHash
+      );
+    }
+
+    // Record a payout only after the successful on-chain receipt is verified.
+    const payoutTx: Transaction = {
+      id: `tx_payout_${Date.now()}`,
+      orderId: null,
+      merchantId,
+      txHash,
+      tokenContract: verification.tokenContract || CHAIN_CONFIG.usdcContractAddress,
+      senderAddress: verification.senderAddress || signer.account.address,
+      recipientAddress: verification.recipientAddress || supplier.walletAddress,
+      amount: verification.amount ?? amount,
+      verificationStatus: 'VERIFIED',
+      type: 'SUPPLIER_PAYOUT',
+      blockNumber: verification.blockNumber ?? null,
+      timestamp: new Date().toISOString(),
+    };
+    await db.createTransaction(payoutTx);
+    await db.updateInvoiceStatus(invoice.id, 'PAID');
+
+    // 4. Record comprehensive audit log
+    const auditLog = await writeAuditLog('EXECUTED', `${evaluation.reason} (Confirmed on Base Sepolia.)`, txHash);
 
     return {
       success: true,

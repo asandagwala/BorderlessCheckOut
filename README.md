@@ -1,5 +1,8 @@
 # Borderless Checkout
 
+[![Live Demo](https://img.shields.io/badge/Demo-Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/R2BtQFe14NU)
+[![Frontend](https://img.shields.io/badge/Frontend-Live-blue?style=for-the-badge)](https://uhuru-one.vercel.app/)
+
 Borderless Checkout is a demo payment platform for African merchants. Customers can pay with USDC on Base Sepolia. The server checks each payment on the blockchain before it marks an order as paid.
 
 The project also includes a merchant dashboard, payment refunds, a simulated USDC-to-ZAR cash-out flow, supplier invoices, treasury policy checks, audit logs, and AI helpers.

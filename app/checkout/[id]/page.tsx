@@ -1,32 +1,35 @@
 'use client';
 
 import React, { useState, useEffect, Suspense, use } from 'react';
+import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
-import { 
-  CheckCircle2, 
-  AlertCircle, 
-  Loader2, 
-  Wallet, 
-  ExternalLink, 
-  Copy, 
-  Check, 
-  ShieldCheck, 
+import {
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Wallet,
+  ExternalLink,
+  Copy,
+  Check,
+  ShieldCheck,
   Coins,
-  ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { encodeFunctionData, getAddress, isAddress, parseUnits, zeroAddress } from 'viem';
+import { UhuruLogo } from '@/components/ui/uhuru-logo';
 
-const erc20TransferAbi = [{
-  type: 'function',
-  name: 'transfer',
-  stateMutability: 'nonpayable',
-  inputs: [
-    { name: 'to', type: 'address' },
-    { name: 'value', type: 'uint256' },
-  ],
-  outputs: [{ name: '', type: 'bool' }],
-}] as const;
+const erc20TransferAbi = [
+  {
+    type: 'function',
+    name: 'transfer',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'value', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+] as const;
 
 interface OrderData {
   id: string;
@@ -117,13 +120,15 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
             if (switchError.code === 4902) {
               await ethereum.request({
                 method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: '0x14A34',
-                  chainName: 'Base Sepolia',
-                  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                  rpcUrls: ['https://sepolia.base.org', 'https://base-sepolia-rpc.publicnode.com'],
-                  blockExplorerUrls: ['https://sepolia.basescan.org'],
-                }],
+                params: [
+                  {
+                    chainId: '0x14A34',
+                    chainName: 'Base Sepolia',
+                    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                    rpcUrls: ['https://sepolia.base.org', 'https://base-sepolia-rpc.publicnode.com'],
+                    blockExplorerUrls: ['https://sepolia.basescan.org'],
+                  },
+                ],
               });
             }
           }
@@ -145,7 +150,9 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
     let txHash: string | null = null;
     try {
       if (typeof window === 'undefined' || !(window as any).ethereum) {
-        throw new Error('No web3 provider detected. Connect a browser wallet to submit a Base Sepolia transaction.');
+        throw new Error(
+          'No web3 provider detected. Connect a browser wallet to submit a Base Sepolia transaction.'
+        );
       }
 
       const ethereum = (window as any).ethereum;
@@ -172,12 +179,14 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
 
       txHash = await ethereum.request({
         method: 'eth_sendTransaction',
-        params: [{
-          from: currentSender,
-          to: usdcContractAddress,
-          data,
-          value: '0x0',
-        }],
+        params: [
+          {
+            from: currentSender,
+            to: usdcContractAddress,
+            data,
+            value: '0x0',
+          },
+        ],
       });
 
       setSubmittingPayment(false);
@@ -221,10 +230,10 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fff3e2] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#700c20]" />
-          <p className="text-sm font-play font-bold text-zinc-700">Loading secure checkout...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[#C84B24]" />
+          <p className="text-sm font-bold text-[#463C35]">Loading secure UHURU checkout...</p>
         </div>
       </div>
     );
@@ -232,15 +241,17 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
 
   if (error || !order || !merchant) {
     return (
-      <div className="min-h-screen bg-[#fff3e2] flex items-center justify-center p-4">
-        <div className="max-w-md w-full rounded-[35px] border-[5px] border-[#700c20] bg-white p-8 text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-[#FFF8EE] flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-2xl border border-[#E8DCD0] bg-white p-8 text-center space-y-4 shadow-lg">
+          <div className="w-12 h-12 rounded-2xl bg-[#FCECEE] text-[#8B1E24] flex items-center justify-center mx-auto">
             <AlertCircle className="w-6 h-6" />
           </div>
-          <h2 className="font-montserrat-extrabold text-xl text-zinc-950">Checkout Unavailable</h2>
-          <p className="text-xs font-play text-zinc-600">{error || 'This order does not exist or has expired.'}</p>
+          <h2 className="font-montserrat-extrabold text-xl text-[#181412]">Checkout Unavailable</h2>
+          <p className="text-xs text-[#685D55]">
+            {error || 'This order does not exist or has expired.'}
+          </p>
           <Link href="/dashboard" className="inline-block mt-4">
-            <button className="px-6 py-2.5 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs">
+            <button className="px-6 py-2.5 rounded-xl bg-[#C84B24] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#A63816]">
               Return to Dashboard
             </button>
           </Link>
@@ -252,105 +263,124 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
   const isPaid = order.paymentStatus === 'PAID';
 
   return (
-    <div className="min-h-screen bg-[#fff3e2] text-zinc-900 flex flex-col justify-between p-4 sm:p-6 lg:p-8 selection:bg-[#700c20] selection:text-white">
-      {/* Top Header */}
-      <header className="max-w-5xl mx-auto w-full flex items-center justify-between pb-6 border-b-2 border-[#700c20]/20 mb-8">
-        <Link href="/dashboard" className="flex items-center gap-3.5 group cursor-pointer" title="Return to Dashboard">
-          <div className="w-11 h-11 rounded-[14px] bg-[#700c20] flex items-center justify-center text-white font-black text-lg shadow-sm transition-transform group-hover:scale-105">
-            BC
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-montserrat-extrabold text-lg sm:text-xl tracking-tight text-zinc-950">
-                Borderless Checkout
-              </span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#700c20]/10 text-[#700c20] border border-[#700c20]/30 font-play">
-                Base Sepolia
-              </span>
-            </div>
-            <p className="text-xs text-zinc-600 font-play">Official Circle USDC Gateway (6 Decimals)</p>
-          </div>
-        </Link>
+    <div className="min-h-screen bg-white text-[#181412] font-body-arial flex flex-col justify-between selection:bg-[#C84B24] selection:text-white">
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#C84B24] via-[#E59A18] to-[#1E6B45]" />
 
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-emerald-600" />
-          <span className="text-xs font-play font-bold text-zinc-700 hidden sm:inline">
-            Smart Contract Verified
-          </span>
+      {/* Top Header */}
+      <header className="border-b border-[#ECE0D3] bg-white">
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <UhuruLogo href="/dashboard" size="sm" theme="dark" showSlogan={true} />
+
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF6F0] border border-[#1E6B45]/25 px-3 py-1 text-xs font-bold text-[#1E6B45]">
+              <ShieldCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Base Sepolia Verified</span>
+              <span className="sm:hidden">Base Sepolia</span>
+            </span>
+          </div>
         </div>
       </header>
 
       {/* Main Checkout Container */}
-      <main className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-8 my-auto">
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 md:grid-cols-12 gap-8 my-auto">
         {/* Left Column: Store & Order Summary */}
         <div className="md:col-span-5 flex flex-col gap-6">
-          <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-6 sm:p-8 shadow-sm space-y-4">
-            <div className="border-b border-[#700c20]/20 pb-4">
-              <span className="text-[11px] font-montserrat-extrabold uppercase tracking-wider text-[#700c20] block mb-1">
-                Merchant Store
-              </span>
-              <h2 className="font-montserrat-extrabold text-2xl text-zinc-950 tracking-tight">
-                {merchant.businessName}
-              </h2>
-              <p className="text-xs font-play text-zinc-500 mt-0.5">
-                Verified African SME Merchant • {merchant.email}
-              </p>
+          <div className="overflow-hidden rounded-2xl border border-[#E8DCD0] bg-white shadow-[0_14px_36px_-15px_rgba(24,20,18,0.1)]">
+            {/* Cultural Banner Header */}
+            <div className="relative h-32 w-full overflow-hidden bg-[#181412]">
+              <Image
+                src="/uhuru/hero.png"
+                alt="African merchant craft"
+                fill
+                className="object-cover opacity-80"
+                sizes="(max-width: 768px) 100vw, 40vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#181412]/90 via-[#181412]/35 to-transparent" />
+              <div className="absolute bottom-3.5 left-6 right-6 text-white">
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#E59A18] block">
+                  Verified UHURU Merchant
+                </span>
+                <h2 className="font-montserrat-extrabold text-xl text-white tracking-tight truncate">
+                  {merchant.businessName}
+                </h2>
+              </div>
             </div>
 
-            <div className="space-y-3 font-play text-xs sm:text-sm">
-              <div className="flex justify-between items-center text-zinc-600">
-                <span>Customer Ref:</span>
-                <span className="font-mono font-bold text-zinc-900">{order.customerReference}</span>
-              </div>
-              <div className="flex justify-between items-center text-zinc-600">
-                <span>Order Reference:</span>
-                <div className="flex items-center gap-1.5 font-mono font-bold text-[#700c20]">
-                  <span>{order.paymentReference}</span>
-                  <button onClick={() => copyToClipboard(order.paymentReference, 'ref')} className="hover:opacity-70 cursor-pointer">
-                    {copiedRef ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
+            <div className="p-6 sm:p-7 space-y-5">
+              <div className="space-y-3 text-xs sm:text-sm">
+                <div className="flex justify-between items-center text-[#685D55]">
+                  <span>Merchant Contact:</span>
+                  <span className="font-bold text-[#181412]">{merchant.email}</span>
+                </div>
+                <div className="flex justify-between items-center text-[#685D55]">
+                  <span>Customer Ref:</span>
+                  <span className="font-mono font-bold text-[#181412]">
+                    {order.customerReference}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[#685D55]">
+                  <span>Order Reference:</span>
+                  <div className="flex items-center gap-1.5 font-mono font-bold text-[#C84B24]">
+                    <span>{order.paymentReference}</span>
+                    <button
+                      onClick={() => copyToClipboard(order.paymentReference, 'ref')}
+                      className="hover:opacity-70 cursor-pointer"
+                    >
+                      {copiedRef ? (
+                        <Check className="w-3.5 h-3.5 text-[#1E6B45]" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center text-[#685D55]">
+                  <span>Order Total (ZAR):</span>
+                  <span className="font-bold text-[#3D342E]">R {order.orderAmount.toFixed(2)}</span>
                 </div>
               </div>
-              <div className="flex justify-between items-center text-zinc-600">
-                <span>Order Total (ZAR):</span>
-                <span className="font-medium text-zinc-800">R {order.orderAmount.toFixed(2)}</span>
-              </div>
-            </div>
 
-            <div className="pt-4 border-t border-[#700c20]/20 flex justify-between items-baseline">
-              <span className="text-xs font-play font-bold text-zinc-700 uppercase tracking-wider">
-                Total Due:
-              </span>
-              <div className="text-right">
-                <span className="text-3xl font-black font-montserrat-extrabold text-[#700c20]">
-                  ${order.usdcAmount.toFixed(2)}
+              <div className="pt-4 border-t border-[#EFE5DA] flex justify-between items-baseline">
+                <span className="text-xs font-bold text-[#685D55] uppercase tracking-wider">
+                  Total Due:
                 </span>
-                <span className="text-xs font-play font-bold text-zinc-600 ml-1.5">USDC</span>
+                <div className="text-right">
+                  <span className="text-3xl font-black font-montserrat-extrabold text-[#C84B24]">
+                    ${order.usdcAmount.toFixed(2)}
+                  </span>
+                  <span className="text-xs font-bold text-[#463C35] ml-1.5">USDC</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Trust Banner */}
-          <div className="p-4 rounded-[24px] bg-[#fff3e2] border-2 border-[#700c20]/30 flex items-center gap-3">
-            <Coins className="w-5 h-5 text-[#700c20] shrink-0" />
-            <p className="text-xs font-play text-zinc-700 leading-snug">
-              Payments are verified directly on Base Sepolia. Funds settle immediately to the merchant&apos;s wallet.
+          <div className="p-4 rounded-xl bg-[#FFF8EE] border border-[#E8DCD0] flex items-center gap-3">
+            <Coins className="w-5 h-5 text-[#C84B24] shrink-0" />
+            <p className="text-xs text-[#4E443C] leading-snug">
+              Payments are verified directly against Base Sepolia transaction receipts before
+              marking your order complete.
             </p>
           </div>
         </div>
 
         {/* Right Column: Payment Actions & Status */}
         <div className="md:col-span-7">
-          <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-6 sm:p-8 shadow-sm">
-            <div className="pb-4 border-b border-[#700c20]/20 flex justify-between items-center mb-6">
-              <h3 className="font-montserrat-extrabold text-xl text-zinc-950">
-                Payment Verification
-              </h3>
+          <div className="rounded-2xl border border-[#E8DCD0] bg-white p-6 sm:p-8 shadow-[0_14px_36px_-15px_rgba(24,20,18,0.1)]">
+            <div className="pb-4 border-b border-[#EFE5DA] flex justify-between items-center mb-6">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#C84B24]">
+                  Circle USDC Settlement
+                </p>
+                <h3 className="font-montserrat-extrabold text-xl text-[#181412] mt-0.5">
+                  Payment Verification
+                </h3>
+              </div>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold font-play uppercase tracking-wider ${
+                className={`px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                   isPaid
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                    ? 'bg-[#EAF6F0] text-[#1E6B45] border border-[#1E6B45]/25'
+                    : 'bg-[#FFF6E0] text-[#9A6004] border border-[#E59A18]/40'
                 }`}
               >
                 {order.paymentStatus}
@@ -360,14 +390,14 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
             <div className="space-y-6">
               {isPaid ? (
                 <div className="text-center py-6 space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 border-2 border-emerald-300 flex items-center justify-center mx-auto">
+                  <div className="w-16 h-16 rounded-2xl bg-[#EAF6F0] text-[#1E6B45] border border-[#1E6B45]/25 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-9 h-9" />
                   </div>
                   <div>
-                    <h3 className="font-montserrat-extrabold text-2xl text-zinc-950">
+                    <h3 className="font-montserrat-extrabold text-2xl text-[#181412]">
                       Payment Successfully Verified!
                     </h3>
-                    <p className="text-xs font-play text-zinc-600 mt-1 max-w-sm mx-auto">
+                    <p className="text-xs text-[#685D55] mt-1 max-w-sm mx-auto">
                       On-chain Transfer event was decoded and reconciled on Base Sepolia.
                     </p>
                   </div>
@@ -378,9 +408,11 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                         href={`https://sepolia.basescan.org/tx/${confirmedTxHash}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#fff3e2] border border-[#700c20]/30 text-xs font-mono font-bold text-[#700c20] hover:underline"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FFF8EE] border border-[#E4D5C5] text-xs font-mono font-bold text-[#C84B24] hover:underline"
                       >
-                        <span>Tx: {confirmedTxHash.slice(0, 10)}...{confirmedTxHash.slice(-8)}</span>
+                        <span>
+                          Tx: {confirmedTxHash.slice(0, 10)}...{confirmedTxHash.slice(-8)}
+                        </span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
@@ -388,7 +420,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
 
                   <div className="pt-4">
                     <Link href="/dashboard">
-                      <button className="px-6 py-3 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] transition-all cursor-pointer">
+                      <button className="px-6 py-3 rounded-xl bg-[#C84B24] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#A63816] transition-all cursor-pointer">
                         Return to Dashboard
                       </button>
                     </Link>
@@ -397,26 +429,26 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
               ) : (
                 <div className="space-y-6">
                   {/* Step 1: Wallet Connection */}
-                  <div className="p-4 bg-[#fff3e2] rounded-[24px] border-2 border-[#700c20]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-xs font-play font-bold uppercase tracking-wider text-zinc-900 flex items-center gap-2">
-                      <Wallet className="w-4 h-4 text-[#700c20]" />
+                  <div className="p-4 bg-[#FFF8EE] rounded-xl border border-[#E8DCD0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#181412] flex items-center gap-2">
+                      <Wallet className="w-4 h-4 text-[#C84B24]" />
                       <span>1. Connect Browser Wallet</span>
                     </span>
                     {walletConnected ? (
-                      <span className="px-3 py-1 rounded-full text-[11px] font-bold font-mono bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-bold font-mono bg-[#EAF6F0] text-[#1E6B45] border border-[#1E6B45]/25">
                         {userAccount?.slice(0, 6)}...{userAccount?.slice(-4)}
                       </span>
                     ) : (
                       <button
                         onClick={connectWallet}
-                        className="px-4 py-2 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] transition-all cursor-pointer shadow-xs"
+                        className="px-4 py-2 rounded-lg bg-[#C84B24] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#A63816] transition-all cursor-pointer shadow-xs"
                       >
                         Connect Wallet
                       </button>
                     )}
                   </div>
                   {walletConnected && walletChainId !== 84532 && (
-                    <p className="text-xs font-play text-rose-700">
+                    <p className="text-xs font-bold text-[#8B1E24]">
                       Please switch your connected wallet to Base Sepolia (Chain ID 84532).
                     </p>
                   )}
@@ -424,29 +456,42 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                   {/* Step 2: Payment Details & QR Code */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                     {/* QR Code */}
-                    <div className="flex flex-col items-center justify-center p-4 bg-[#fff3e2] rounded-[24px] border-2 border-[#700c20]/30 text-center">
+                    <div className="flex flex-col items-center justify-center p-4 bg-[#FFF8EE] rounded-xl border border-[#E8DCD0] text-center">
                       <QRCodeSVG
                         value={`ethereum:0x036CbD53842c5426634e7929541eC2318f3dCF7e@84532/transfer?address=${merchant.walletAddress}&uint256=${parseUnits(order.usdcAmount.toString(), 6).toString()}`}
                         size={135}
                         level="M"
                       />
-                      <span className="text-[10px] font-play text-zinc-500 mt-2">Scan with mobile web3 wallet</span>
+                      <span className="text-[10px] text-[#685D55] mt-2">
+                        Scan with mobile web3 wallet
+                      </span>
                     </div>
 
                     {/* Merchant Wallet Info */}
-                    <div className="space-y-3 text-xs font-play">
+                    <div className="space-y-3 text-xs">
                       <div>
-                        <span className="text-zinc-600 block mb-1">Merchant Settlement Address:</span>
-                        <div className="flex items-center gap-1 font-mono text-[11px] text-zinc-900 bg-[#fff3e2] p-2 rounded-[14px] border border-[#700c20]/30">
+                        <span className="text-[#685D55] font-bold block mb-1">
+                          Merchant Settlement Address:
+                        </span>
+                        <div className="flex items-center gap-1 font-mono text-[11px] text-[#181412] bg-[#FFF8EE] p-2.5 rounded-xl border border-[#E4D5C5]">
                           <span className="truncate flex-1">{merchant.walletAddress}</span>
-                          <button onClick={() => copyToClipboard(merchant.walletAddress, 'address')} className="text-[#700c20] hover:opacity-70 cursor-pointer">
-                            {copiedAddress ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          <button
+                            onClick={() => copyToClipboard(merchant.walletAddress, 'address')}
+                            className="text-[#C84B24] hover:opacity-70 cursor-pointer"
+                          >
+                            {copiedAddress ? (
+                              <Check className="w-3.5 h-3.5 text-[#1E6B45]" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         </div>
                       </div>
                       <div>
-                        <span className="text-zinc-600 block mb-1">Circle USDC Token Contract:</span>
-                        <div className="font-mono text-[11px] text-zinc-800 truncate bg-[#fff3e2] p-2 rounded-[14px] border border-[#700c20]/30">
+                        <span className="text-[#685D55] font-bold block mb-1">
+                          Circle USDC Token Contract:
+                        </span>
+                        <div className="font-mono text-[11px] text-[#4E443C] truncate bg-[#FFF8EE] p-2.5 rounded-xl border border-[#E4D5C5]">
                           0x036CbD53842c5426634e7929541eC2318f3dCF7e
                         </div>
                       </div>
@@ -454,8 +499,8 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                   </div>
 
                   {verificationError && (
-                    <div className="p-3.5 bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs font-play rounded-[20px] flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div className="p-3.5 bg-[#FCECEE] border border-[#8B1E24]/30 text-[#8B1E24] text-xs rounded-xl flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-[#8B1E24] shrink-0 mt-0.5" />
                       <span>{verificationError}</span>
                     </div>
                   )}
@@ -465,7 +510,7 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
                     <button
                       onClick={handlePayUsdc}
                       disabled={submittingPayment || verifyingOnChain || !walletConnected}
-                      className="w-full py-4 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-sm uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+                      className="w-full py-4 rounded-xl bg-[#C84B24] text-white font-bold text-sm uppercase tracking-wider hover:bg-[#A63816] disabled:opacity-50 transition-all cursor-pointer shadow-[0_10px_24px_-6px_rgba(200,75,36,0.45)] flex items-center justify-center gap-2"
                     >
                       {submittingPayment ? (
                         <>
@@ -490,8 +535,13 @@ function CheckoutContent({ paramsPromise }: { paramsPromise: Promise<{ id: strin
       </main>
 
       {/* Footer */}
-      <footer className="max-w-5xl mx-auto w-full text-center text-xs font-play text-zinc-600 pt-8">
-        Borderless Checkout • Node Engine Hackathon 2026 • Base Sepolia Chain ID 84532
+      <footer className="border-t border-[#ECE0D3] bg-[#FFF8EE] py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#685D55]">
+          <span className="font-bold text-[#181412]">
+            UHURU &bull; Freedom to Pay. Freedom to Grow.
+          </span>
+          <span>Base Sepolia Chain ID 84532 &bull; Circle USDC (6 Decimals)</span>
+        </div>
       </footer>
     </div>
   );
@@ -501,10 +551,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#fff3e2] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-white flex items-center justify-center p-4">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-[#700c20]" />
-            <p className="text-sm font-play font-bold text-zinc-700">Loading secure checkout...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-[#C84B24]" />
+            <p className="text-sm font-bold text-[#463C35]">Loading secure UHURU checkout...</p>
           </div>
         </div>
       }

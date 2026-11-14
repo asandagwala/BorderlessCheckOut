@@ -1,34 +1,27 @@
 import type { Metadata } from "next";
-import { Montserrat, Play } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: ["400", "700", "900"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-montserrat",
   display: "swap",
 });
 
-const play = Play({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-play",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "Borderless Checkout | African SME Stablecoin Payments",
+  title: "UHURU | Freedom to Pay. Freedom to Grow.",
   description:
-    "Accept USDC at checkout, verify on Base Sepolia, and automate treasury supplier settlements via AI agents governed by independent policy engines.",
+    "Accept USDC payments, verify on-chain settlements, and automate supplier payouts with African warmth, speed, and independent policy governance.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${montserrat.variable} ${play.variable} h-full antialiased`}
+      className={`${montserrat.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-play bg-[#fff3e2] text-zinc-900 selection:bg-[#700c20] selection:text-white">
+      <body className="min-h-full flex flex-col font-sans bg-white text-[#181412] selection:bg-[#C84B24] selection:text-white">
         {children}
       </body>
     </html>

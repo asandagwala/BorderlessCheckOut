@@ -1,24 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  ShieldCheck, 
-  CheckCircle2, 
-  XCircle, 
-  ExternalLink, 
-  Loader2, 
-  Play, 
-  Cpu,
+import Image from 'next/image';
+import {
+  ShieldCheck,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  Loader2,
+  Play,
   Sparkles,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import type { TreasuryAgentRunResult } from '../treasury-agent.service';
 import type { GeminiProposalResponse } from '../gemini-proposal.service';
 
-export function TreasuryAgentView({ 
-  merchantId, 
-  onActionComplete 
-}: { 
+export function TreasuryAgentView({
+  merchantId,
+  onActionComplete,
+}: {
   merchantId: string;
   onActionComplete?: () => void;
 }) {
@@ -78,70 +78,95 @@ export function TreasuryAgentView({
     }
   };
 
-  const decision = result ? (result.decision || (result as any).policyDecision) : null;
+  const decision = result ? result.decision || (result as any).policyDecision : null;
   const isApproved = decision === 'APPROVED';
-  const reasonText = result ? (result.reason || (result as any).policyReason || (result as any).summary) : '';
+  const reasonText = result ? result.reason || (result as any).policyReason || (result as any).summary : '';
 
   return (
     <div className="space-y-8">
-      {/* Top Banner / Test Bench Description */}
-      <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Cpu className="w-5 h-5 text-[#700c20]" />
-            <h2 className="font-montserrat-extrabold text-xl sm:text-2xl text-zinc-950 tracking-tight">
-              Autonomous AI Treasury Agent Test Bench
+      {/* Editorial Treasury Protection Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-[#E8DCD0] bg-[#181412] text-white shadow-sm">
+        <Image
+          src="/uhuru/textiles.png"
+          alt="African heritage woven textiles"
+          fill
+          className="object-cover opacity-35"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#181412] via-[#181412]/85 to-[#181412]/40" />
+        <div className="relative p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#E59A18] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#181412]">
+              <ShieldCheck className="size-3.5" />
+              Independent Policy Engine Active
+            </div>
+            <h2 className="mt-3 font-montserrat-extrabold text-2xl sm:text-3xl tracking-tight text-white">
+              Supplier Payout Governance
             </h2>
+            <p className="mt-2 text-xs sm:text-sm text-white/80 leading-relaxed">
+              Every supplier invoice proposal is evaluated against your $500.00 USDC transaction limit
+              and approved vendor whitelist before any Base Sepolia settlement can execute.
+            </p>
           </div>
-          <p className="text-xs sm:text-sm font-play text-zinc-600 max-w-2xl">
-            Autonomous settlement agent governed by an independent policy engine. Gemini analyzes invoices and returns structured proposals, while policies strictly enforce a $500.00 USDC cap and approved supplier whitelists.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 bg-[#fff3e2] px-4 py-2 rounded-full border-2 border-[#700c20]/20 text-xs font-play shrink-0">
-          <ShieldCheck className="w-4 h-4 text-[#700c20]" />
-          <span>Spending Limit: <strong className="text-[#700c20] font-bold">$500.00 USDC</strong></span>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <div className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
+              <span className="block text-[10px] uppercase tracking-wider text-[#E59A18] font-bold">
+                Max Per-Tx Limit
+              </span>
+              <span className="font-montserrat-extrabold text-xl text-white">$500.00 USDC</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Two Scenario Trigger Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 items-stretch">
         {/* Scenario 1 Card: Approved */}
-        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-lg">
+        <div className="rounded-2xl border-2 border-[#1E6B45]/25 bg-white p-7 sm:p-8 flex flex-col justify-between shadow-[0_12px_32px_-12px_rgba(24,20,18,0.06)]">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="px-3 py-1 rounded-full text-xs font-bold font-play uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                Scenario 1: Approved
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#EAF6F0] text-[#1E6B45] border border-[#1E6B45]/25">
+                Ready to pay
               </span>
-              <span className="font-montserrat-extrabold text-xl font-black text-[#700c20]">
+              <span className="font-montserrat-extrabold text-xl font-black text-[#1E6B45]">
                 $100.00 USDC
               </span>
             </div>
 
             <div>
-              <h3 className="font-montserrat-extrabold text-xl sm:text-2xl text-zinc-950 tracking-tight leading-snug">
+              <h3 className="font-montserrat-extrabold text-xl sm:text-2xl text-[#181412] tracking-tight leading-snug">
                 Authorized Supplier Settlement
               </h3>
-              <p className="text-xs sm:text-sm font-play text-zinc-600 mt-2 leading-relaxed">
-                Supplier is approved (&ldquo;Cape Agro Packaging&rdquo;), balance is sufficient, and invoice ($100) is well within $500 spending limit.
+              <p className="text-xs sm:text-sm text-[#544940] mt-2 leading-relaxed">
+                Supplier is approved (&ldquo;Cape Agro Packaging&rdquo;), balance is sufficient, and
+                invoice ($100) is well within your $500 spending limit.
               </p>
             </div>
 
-            <div className="p-4 rounded-[20px] bg-[#fff3e2] border-2 border-[#700c20]/20 space-y-2 text-xs font-play text-zinc-800">
+            <div className="p-4 rounded-xl bg-[#FFF8EE] border border-[#E8DCD0] space-y-2 text-xs text-[#2C241E]">
               <div className="flex items-center gap-2">
-                <span className="text-emerald-700 font-bold">✓</span>
-                <span><strong>Vendor:</strong> Cape Agro Packaging Ltd (Status: APPROVED)</span>
+                <span className="text-[#1E6B45] font-bold">✓</span>
+                <span>
+                  <strong>Vendor:</strong> Cape Agro Packaging Ltd (Status: APPROVED)
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-emerald-700 font-bold">✓</span>
-                <span><strong>Proposed Amount:</strong> $100.00 USDC (Limit: $500.00)</span>
+                <span className="text-[#1E6B45] font-bold">✓</span>
+                <span>
+                  <strong>Proposed Amount:</strong> $100.00 USDC (Limit: $500.00)
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-emerald-700 font-bold">✓</span>
-                <span><strong>Policy Engine:</strong> APPROVES</span>
+                <span className="text-[#1E6B45] font-bold">✓</span>
+                <span>
+                  <strong>Policy Engine:</strong> APPROVES
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-emerald-700 font-bold">✓</span>
-                <span><strong>Execution:</strong> Submitted to Base Sepolia testnet</span>
+                <span className="text-[#1E6B45] font-bold">✓</span>
+                <span>
+                  <strong>Execution:</strong> Submitted to Base Sepolia testnet
+                </span>
               </div>
             </div>
           </div>
@@ -150,15 +175,19 @@ export function TreasuryAgentView({
             <button
               onClick={() => analyzeInvoice('inv_demo_approved_100')}
               disabled={Boolean(analyzingInvoiceId)}
-              className="w-full py-3 px-6 rounded-[35px] bg-[#fff3e2] text-[#700c20] border-2 border-[#700c20] font-play font-bold text-xs uppercase tracking-wider hover:bg-[#700c20] hover:text-white disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
+              className="w-full py-3 px-5 rounded-xl bg-[#FFF8EE] text-[#C84B24] border border-[#C84B24]/40 font-bold text-xs uppercase tracking-wider hover:bg-[#C84B24] hover:text-white disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{analyzingInvoiceId === 'inv_demo_approved_100' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}</span>
+              <span>
+                {analyzingInvoiceId === 'inv_demo_approved_100'
+                  ? 'Reviewing invoice…'
+                  : 'Review this invoice'}
+              </span>
             </button>
             <button
               onClick={() => runScenario('SCENARIO_1')}
               disabled={running}
-              className="w-full py-3.5 px-6 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-6 rounded-xl bg-[#1E6B45] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#165234] disabled:opacity-50 transition-all cursor-pointer shadow-[0_8px_20px_-6px_rgba(30,107,69,0.45)] flex items-center justify-center gap-2"
             >
               {running && activeScenario === 'SCENARIO_1' ? (
                 <>
@@ -168,7 +197,7 @@ export function TreasuryAgentView({
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-current" />
-                  <span>Run Scenario 1 ($100 Approved)</span>
+                  <span>Pay $100 invoice</span>
                 </>
               )}
             </button>
@@ -176,42 +205,51 @@ export function TreasuryAgentView({
         </div>
 
         {/* Scenario 2 Card: Rejected */}
-        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 flex flex-col justify-between shadow-sm transition-all duration-300 hover:shadow-lg">
+        <div className="rounded-2xl border-2 border-[#8B1E24]/25 bg-white p-7 sm:p-8 flex flex-col justify-between shadow-[0_12px_32px_-12px_rgba(24,20,18,0.06)]">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="px-3 py-1 rounded-full text-xs font-bold font-play uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300">
-                Scenario 2: Rejected
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FCECEE] text-[#8B1E24] border border-[#8B1E24]/25">
+                Needs review
               </span>
-              <span className="font-montserrat-extrabold text-xl font-black text-[#700c20]">
+              <span className="font-montserrat-extrabold text-xl font-black text-[#8B1E24]">
                 $700.00 USDC
               </span>
             </div>
 
             <div>
-              <h3 className="font-montserrat-extrabold text-xl sm:text-2xl text-zinc-950 tracking-tight leading-snug">
+              <h3 className="font-montserrat-extrabold text-xl sm:text-2xl text-[#181412] tracking-tight leading-snug">
                 Policy Limit Violation Guardrail
               </h3>
-              <p className="text-xs sm:text-sm font-play text-zinc-600 mt-2 leading-relaxed">
-                Autonomous agent attempts payment of $700.00 for machinery maintenance. Independent policy engine blocks on-chain submission immediately.
+              <p className="text-xs sm:text-sm text-[#544940] mt-2 leading-relaxed">
+                Autonomous agent attempts payment of $700.00 for machinery maintenance. Independent
+                policy engine blocks on-chain submission immediately.
               </p>
             </div>
 
-            <div className="p-4 rounded-[20px] bg-[#fff3e2] border-2 border-[#700c20]/20 space-y-2 text-xs font-play text-zinc-800">
+            <div className="p-4 rounded-xl bg-[#FFF8EE] border border-[#E8DCD0] space-y-2 text-xs text-[#2C241E]">
               <div className="flex items-center gap-2">
-                <span className="text-emerald-700 font-bold">✓</span>
-                <span><strong>Vendor:</strong> Kigali Cold Storage Ltd (Status: APPROVED)</span>
+                <span className="text-[#1E6B45] font-bold">✓</span>
+                <span>
+                  <strong>Vendor:</strong> Kigali Cold Storage Ltd (Status: APPROVED)
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-rose-700 font-bold">✕</span>
-                <span><strong>Proposed Amount:</strong> $700.00 USDC (Limit: $500.00)</span>
+                <span className="text-[#8B1E24] font-bold">✕</span>
+                <span>
+                  <strong>Proposed Amount:</strong> $700.00 USDC (Limit: $500.00)
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-rose-700 font-bold">✕</span>
-                <span><strong>Policy Engine:</strong> REJECTS (Spending limit exceeded)</span>
+                <span className="text-[#8B1E24] font-bold">✕</span>
+                <span>
+                  <strong>Policy Engine:</strong> REJECTS (Spending limit exceeded)
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-rose-700 font-bold">✕</span>
-                <span><strong>Execution:</strong> BLOCKED (No blockchain tx submitted)</span>
+                <span className="text-[#8B1E24] font-bold">✕</span>
+                <span>
+                  <strong>Execution:</strong> BLOCKED (No blockchain tx submitted)
+                </span>
               </div>
             </div>
           </div>
@@ -220,15 +258,19 @@ export function TreasuryAgentView({
             <button
               onClick={() => analyzeInvoice('inv_demo_rejected_700')}
               disabled={Boolean(analyzingInvoiceId)}
-              className="w-full py-3 px-6 rounded-[35px] bg-[#fff3e2] text-[#700c20] border-2 border-[#700c20] font-play font-bold text-xs uppercase tracking-wider hover:bg-[#700c20] hover:text-white disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
+              className="w-full py-3 px-5 rounded-xl bg-[#FFF8EE] text-[#8B1E24] border border-[#8B1E24]/35 font-bold text-xs uppercase tracking-wider hover:bg-[#8B1E24] hover:text-white disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{analyzingInvoiceId === 'inv_demo_rejected_700' ? 'Gemini is analyzing…' : 'Generate Gemini Proposal'}</span>
+              <span>
+                {analyzingInvoiceId === 'inv_demo_rejected_700'
+                  ? 'Reviewing invoice…'
+                  : 'Review this invoice'}
+              </span>
             </button>
             <button
               onClick={() => runScenario('SCENARIO_2')}
               disabled={running}
-              className="w-full py-3.5 px-6 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs uppercase tracking-wider hover:bg-[#520917] disabled:opacity-50 transition-all duration-200 cursor-pointer shadow-xs flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-6 rounded-xl bg-[#C84B24] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#A63816] disabled:opacity-50 transition-all cursor-pointer shadow-[0_8px_20px_-6px_rgba(200,75,36,0.45)] flex items-center justify-center gap-2"
             >
               {running && activeScenario === 'SCENARIO_2' ? (
                 <>
@@ -238,7 +280,7 @@ export function TreasuryAgentView({
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-current text-white" />
-                  <span>Run Scenario 2 ($700 Limit Exceeded)</span>
+                  <span>Review $700 invoice</span>
                 </>
               )}
             </button>
@@ -248,36 +290,37 @@ export function TreasuryAgentView({
 
       {/* Gemini Proposal Result Card */}
       {proposal && (
-        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 space-y-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#700c20]/20">
+        <div className="rounded-2xl border border-[#E8DCD0] bg-white p-7 sm:p-8 space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#EFE5DA]">
             <div>
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#700c20]" />
-                <h3 className="font-montserrat-extrabold text-xl text-zinc-950">
-                  Gemini Proposal Analysis
+                <Sparkles className="w-5 h-5 text-[#C84B24]" />
+                <h3 className="font-montserrat-extrabold text-xl text-[#181412]">
+                  Invoice review
                 </h3>
               </div>
-              <p className="text-xs font-play text-zinc-600 mt-1">
-                Generated by {proposal.model} • Supplier: {proposal.supplierName} (${proposal.invoiceAmount.toFixed(2)} USDC)
+              <p className="text-xs text-[#685D55] mt-1">
+                Generated by {proposal.model} &bull; Supplier: {proposal.supplierName} ($
+                {proposal.invoiceAmount.toFixed(2)} USDC)
               </p>
             </div>
-            <span className="px-4 py-1.5 rounded-full text-xs font-bold font-play uppercase tracking-wider bg-[#700c20] text-white">
+            <span className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#C84B24] text-white">
               Action: {proposal.recommendation}
             </span>
           </div>
 
-          <div className="p-4 rounded-[20px] bg-[#fff3e2] border-2 border-[#700c20]/20 space-y-3 text-xs sm:text-sm font-play text-zinc-800">
+          <div className="p-5 rounded-xl bg-[#FFF8EE] border border-[#E8DCD0] space-y-3 text-xs sm:text-sm text-[#2C241E]">
             <div>
-              <span className="font-bold block text-zinc-950 text-base font-montserrat">
-                Rationale & Analysis:
+              <span className="font-bold block text-[#181412] text-base font-slogan">
+                Rationale &amp; Analysis:
               </span>
-              <p className="mt-1 text-zinc-700 leading-relaxed">{proposal.rationale}</p>
+              <p className="mt-1 text-[#4E443C] leading-relaxed">{proposal.rationale}</p>
             </div>
 
             {proposal.riskFlags && proposal.riskFlags.length > 0 && (
-              <div className="pt-2 border-t border-[#700c20]/20 space-y-1">
-                <span className="text-xs font-bold text-zinc-950 block">Risk Evaluation Flags:</span>
-                <ul className="list-disc list-inside text-xs text-zinc-700 space-y-0.5">
+              <div className="pt-2 border-t border-[#E8DCD0] space-y-1">
+                <span className="text-xs font-bold text-[#181412] block">Risk Evaluation Flags:</span>
+                <ul className="list-disc list-inside text-xs text-[#4E443C] space-y-0.5">
                   {proposal.riskFlags.map((flag, idx) => (
                     <li key={idx}>{flag}</li>
                   ))}
@@ -285,9 +328,13 @@ export function TreasuryAgentView({
               </div>
             )}
 
-            <div className="pt-2 border-t border-[#700c20]/20 flex items-center justify-between text-xs font-bold">
+            <div className="pt-2 border-t border-[#E8DCD0] flex items-center justify-between text-xs font-bold">
               <span>Policy Engine Alignment:</span>
-              <span className={proposal.policyDecision === 'APPROVED' ? 'text-emerald-700' : 'text-rose-700'}>
+              <span
+                className={
+                  proposal.policyDecision === 'APPROVED' ? 'text-[#1E6B45]' : 'text-[#8B1E24]'
+                }
+              >
                 {proposal.policyDecision} ({proposal.policyReason})
               </span>
             </div>
@@ -296,29 +343,31 @@ export function TreasuryAgentView({
       )}
 
       {proposalError && (
-        <div className="p-4 rounded-[24px] bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs font-play flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+        <div className="p-4 rounded-xl bg-[#FCECEE] border border-[#8B1E24]/30 text-[#8B1E24] text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-[#8B1E24] shrink-0" />
           <span>{proposalError}</span>
         </div>
       )}
 
       {/* Execution Results & Step Trace */}
       {result && (
-        <div className="rounded-[35px] border-[5px] border-[#700c20] bg-white p-7 sm:p-8 space-y-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#700c20]/20">
+        <div className="rounded-2xl border border-[#E8DCD0] bg-white p-7 sm:p-8 space-y-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#EFE5DA]">
             <div>
-              <h3 className="font-montserrat-extrabold text-xl text-zinc-950">
+              <h3 className="font-montserrat-extrabold text-xl text-[#181412]">
                 Agent Decision &amp; Verification Trace
               </h3>
-              <p className="text-xs font-play text-zinc-600 mt-1">
-                Run ID: <span className="font-mono font-bold">{result.runId}</span> • Invoice: <span className="font-mono font-bold">${result.invoiceAmount?.toFixed(2)} USDC</span> to {result.supplierName}
+              <p className="text-xs text-[#685D55] mt-1">
+                Run ID: <span className="font-mono font-bold">{result.runId}</span> &bull; Invoice:{' '}
+                <span className="font-mono font-bold">${result.invoiceAmount?.toFixed(2)} USDC</span>{' '}
+                to {result.supplierName}
               </p>
             </div>
             <span
-              className={`px-4 py-1.5 rounded-full text-xs font-bold font-play uppercase tracking-wider ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                 isApproved
-                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                  : 'bg-rose-100 text-rose-800 border border-rose-300'
+                  ? 'bg-[#EAF6F0] text-[#1E6B45] border border-[#1E6B45]/25'
+                  : 'bg-[#FCECEE] text-[#8B1E24] border border-[#8B1E24]/25'
               }`}
             >
               Policy Decision: {decision}
@@ -327,29 +376,31 @@ export function TreasuryAgentView({
 
           {/* Outcome summary alert */}
           <div
-            className={`p-5 rounded-[24px] border-2 flex items-start gap-3 ${
+            className={`p-5 rounded-xl border flex items-start gap-3 ${
               isApproved
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
-                : 'bg-rose-50 border-rose-300 text-rose-950'
+                ? 'bg-[#EAF6F0]/70 border-[#1E6B45]/30 text-[#143D29]'
+                : 'bg-[#FCECEE]/70 border-[#8B1E24]/30 text-[#5C1216]'
             }`}
           >
             {isApproved ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#1E6B45] shrink-0 mt-0.5" />
             ) : (
-              <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <XCircle className="w-5 h-5 text-[#8B1E24] shrink-0 mt-0.5" />
             )}
-            <div className="text-xs sm:text-sm font-play space-y-1">
+            <div className="text-xs sm:text-sm space-y-1">
               <p className="font-bold">Formal Decision: {decision}</p>
-              <p className="text-zinc-600 leading-relaxed">{reasonText}</p>
+              <p className="text-[#4E443C] leading-relaxed">{reasonText}</p>
               {result.txHash && (
                 <div className="pt-2">
                   <a
                     href={`https://sepolia.basescan.org/tx/${result.txHash}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-[#700c20] hover:underline"
+                    className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-[#C84B24] hover:underline"
                   >
-                    <span>View Base Sepolia Tx: {result.txHash.slice(0, 10)}...{result.txHash.slice(-6)}</span>
+                    <span>
+                      View Base Sepolia Tx: {result.txHash.slice(0, 10)}...{result.txHash.slice(-6)}
+                    </span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -359,26 +410,26 @@ export function TreasuryAgentView({
 
           {/* Step traces */}
           <div className="space-y-3 pt-2">
-            <h4 className="font-montserrat-extrabold text-sm uppercase tracking-wider text-zinc-900">
+            <h4 className="font-montserrat-extrabold text-sm uppercase tracking-wider text-[#181412]">
               Audit Steps &amp; Reasoning Log
             </h4>
-            <div className="space-y-2.5 font-play text-xs">
+            <div className="space-y-2.5 text-xs">
               {(result.traces || (result as any).steps || []).map((st: any, i: number) => (
                 <div
                   key={i}
-                  className="p-3.5 rounded-[18px] bg-[#fff3e2] border border-[#700c20]/20 flex items-start gap-3"
+                  className="p-4 rounded-xl bg-[#FFF8EE] border border-[#E8DCD0] flex items-start gap-3"
                 >
-                  <span className="w-6 h-6 rounded-full bg-[#700c20] text-white flex items-center justify-center shrink-0 font-bold text-[10px]">
+                  <span className="w-6 h-6 rounded-full bg-[#C84B24] text-white flex items-center justify-center shrink-0 font-bold text-[10px]">
                     {st.step || i + 1}
                   </span>
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-zinc-950 uppercase tracking-wide text-[11px]">
+                      <span className="font-bold text-[#181412] uppercase tracking-wide text-[11px]">
                         {st.action || st.step}
                       </span>
-                      <span className="text-[10px] text-zinc-500">{st.timestamp}</span>
+                      <span className="text-[10px] text-[#685D55]">{st.timestamp}</span>
                     </div>
-                    <p className="text-zinc-700 leading-relaxed">{st.detail || st.details}</p>
+                    <p className="text-[#4E443C] leading-relaxed">{st.detail || st.details}</p>
                   </div>
                 </div>
               ))}

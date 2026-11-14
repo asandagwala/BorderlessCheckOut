@@ -2,134 +2,172 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@font-face {
+  font-family: "Arain Bold";
+  src: url("/fonts/Arain-Bold.woff2") format("woff2"),
+       url("/fonts/Arain-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: #fff3e2;
-  --color-foreground: #18181b;
-  --color-brand-red: #700c20;
-  --color-brand-cream: #fff3e2;
-  --font-sans: var(--font-play), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-heading: var(--font-montserrat), sans-serif;
-  --font-play: var(--font-play), sans-serif;
-  --font-montserrat: var(--font-montserrat), sans-serif;
-  --color-primary: #700c20;
+  --color-background: #ffffff;
+  --color-foreground: #181412;
+  --color-brand-red: #C84B24;
+  --color-brand-terracotta: #C84B24;
+  --color-brand-ochre: #E59A18;
+  --color-brand-crimson: #8B1E24;
+  --color-brand-green: #1E6B45;
+  --color-brand-cream: #FFF8EE;
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-heading: var(--font-montserrat), Arial, sans-serif;
+  --font-play: Arial, Helvetica, sans-serif;
+  --font-montserrat: var(--font-montserrat), Arial, sans-serif;
+  --font-arain: "Arain Bold", var(--font-montserrat), sans-serif;
+  --color-primary: #C84B24;
   --color-primary-foreground: #ffffff;
   --color-card: #ffffff;
-  --color-card-foreground: #18181b;
-  --color-border: #700c20;
-  --radius-lg: 35px;
-  --radius-md: 24px;
-  --radius-sm: 16px;
+  --color-card-foreground: #181412;
+  --color-border: #E8DCD0;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
 }
 
 :root {
-  --brand: #700c20;
-  --brand-dark: #580918;
-  --brand-soft: #f8edf0;
-  --ink: #20191b;
-  --muted: #756d6f;
-  --surface: #ffffff;
-  --page: #fff3e2;
-  --line: #eadfe2;
-  --radius: 35px;
+  --uhuru-terracotta: #C84B24;
+  --uhuru-terracotta-dark: #A63816;
+  --uhuru-ochre: #E59A18;
+  --uhuru-ochre-light: #FFF5DF;
+  --uhuru-crimson: #8B1E24;
+  --uhuru-green: #1E6B45;
+  --uhuru-green-light: #EAF6F0;
+  --uhuru-cream: #FFF8EE;
+  --uhuru-sand: #F7EFE4;
 
-  --background: #fff3e2;
-  --foreground: #18181b;
+  --brand: #C84B24;
+  --brand-dark: #A63816;
+  --brand-soft: #FFF5EE;
+  --ink: #181412;
+  --muted: #685D55;
+  --surface: #ffffff;
+  --page: #ffffff;
+  --line: #E8DCD0;
+  --radius: 10px;
+
+  --background: #ffffff;
+  --foreground: #181412;
   --card: #ffffff;
-  --card-foreground: #18181b;
+  --card-foreground: #181412;
   --popover: #ffffff;
-  --popover-foreground: #18181b;
-  --primary: #700c20;
+  --popover-foreground: #181412;
+  --primary: #C84B24;
   --primary-foreground: #ffffff;
-  --secondary: #fff3e2;
-  --secondary-foreground: #700c20;
-  --muted-foreground: #71717a;
-  --accent: #fff3e2;
-  --accent-foreground: #700c20;
-  --destructive: #700c20;
-  --border: #700c20;
-  --input: #e4d3bd;
-  --ring: #700c20;
+  --secondary: #FFF8EE;
+  --secondary-foreground: #8B1E24;
+  --muted-foreground: #685D55;
+  --accent: #FFF3E4;
+  --accent-foreground: #C84B24;
+  --destructive: #8B1E24;
+  --border: #E8DCD0;
+  --input: #E2D4C6;
+  --ring: #C84B24;
 }
 
 @layer base {
   body {
-    background-color: #fff3e2;
-    color: #18181b;
-    font-family: var(--font-play), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #ffffff;
+    color: #181412;
+    font-family: Arial, Helvetica, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-montserrat), sans-serif;
+    font-family: var(--font-montserrat), Arial, sans-serif;
   }
   button {
-    font-family: var(--font-play), sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     font-weight: 700;
   }
 }
 
-/* Custom design system utility classes */
+/* Brand Typography Utilities */
+.font-arain {
+  font-family: "Arain Bold", var(--font-montserrat), sans-serif;
+  font-weight: 700;
+}
+
+.font-slogan {
+  font-family: var(--font-montserrat), Arial, sans-serif;
+}
+
+.font-body-arial {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 .font-montserrat-extrabold {
-  font-family: var(--font-montserrat), sans-serif;
+  font-family: var(--font-montserrat), Arial, sans-serif;
   font-weight: 900;
 }
 
 .font-montserrat-regular {
-  font-family: var(--font-montserrat), sans-serif;
-  font-weight: 400;
+  font-family: var(--font-montserrat), Arial, sans-serif;
+  font-weight: 500;
 }
 
 .font-play-regular {
-  font-family: var(--font-play), sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-weight: 400;
 }
 
 .font-play-bold {
-  font-family: var(--font-play), sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-weight: 700;
 }
 
-/* 35px corner rounding with 5px border */
+/* Vibrant Brand Cards & Interactive Buttons */
 .card-border-brand {
-  border: 5px solid #700c20;
-  border-radius: 35px;
+  border: 1.5px solid #E8DCD0;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px -8px rgba(24, 20, 18, 0.06);
 }
 
-/* Interactive hover button: white by default -> red with white text on hover */
 .btn-interactive-red {
   background-color: #ffffff;
-  color: #700c20;
-  border: 2px solid #700c20;
+  color: #C84B24;
+  border: 2px solid #C84B24;
   transition: all 0.2s ease-in-out;
 }
 .btn-interactive-red:hover {
-  background-color: #700c20;
+  background-color: #C84B24;
   color: #ffffff;
+  box-shadow: 0 8px 20px -4px rgba(200, 75, 36, 0.35);
 }
 
 .btn-solid-red {
-  background-color: #700c20;
+  background-color: #C84B24;
   color: #ffffff;
-  border: 2px solid #700c20;
+  border: 2px solid #C84B24;
   transition: all 0.2s ease-in-out;
 }
 .btn-solid-red:hover {
-  background-color: #550918;
-  border-color: #550918;
+  background-color: #A63816;
+  border-color: #A63816;
+  box-shadow: 0 8px 24px -4px rgba(200, 75, 36, 0.4);
 }
 
-/* Additional layout & component styles */
 .brand-mark {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  background: var(--brand);
+  background: linear-gradient(135deg, #C84B24 0%, #8B1E24 100%);
   color: white;
-  border-radius: 14px;
-  font-family: var(--font-montserrat);
-  font-weight: 900;
-  font-size: 18px;
+  border-radius: 10px;
+  font-family: "Arain Bold", var(--font-montserrat), sans-serif;
+  font-weight: 700;
+  font-size: 22px;
 }
 
 .orders-summary {
@@ -140,9 +178,9 @@
 }
 .orders-summary-card {
   padding: 16px;
-  border-radius: 20px;
+  border-radius: 10px;
   background: #ffffff;
-  border: 2px solid #700c20;
+  border: 1.5px solid #E8DCD0;
 }
 .orders-summary-card .summary-label {
   display: flex;
@@ -170,10 +208,10 @@
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 120px);
   z-index: 50;
-  border-radius: 35px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(112, 12, 32, 0.25);
-  border: 5px solid #700c20;
+  box-shadow: 0 24px 64px rgba(24, 20, 18, 0.22);
+  border: 2px solid #C84B24;
 }
 
 .chat-fab {
@@ -183,13 +221,13 @@
   width: 60px;
   height: 60px;
   border-radius: 9999px;
-  background: #700c20;
+  background: #C84B24;
   color: white;
   display: grid;
   place-items: center;
   z-index: 50;
-  border: 4px solid white;
-  box-shadow: 0 10px 30px rgba(112, 12, 32, 0.4);
+  border: 3px solid white;
+  box-shadow: 0 12px 32px rgba(200, 75, 36, 0.4);
   cursor: pointer;
   transition: transform 0.2s ease;
 }

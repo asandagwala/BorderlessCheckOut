@@ -25,7 +25,7 @@ export function ChatbotView({
     {
       id: 'msg_welcome',
       sender: 'assistant',
-      text: "Hello! I am your AI Merchant Assistant powered by the Claude API and your real on-chain transaction records on Base Sepolia. How can I help with your store metrics today?",
+      text: "Hello! I’m your UHURU assistant. I can help you understand your sales, verified payments, and outstanding orders.",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -33,10 +33,10 @@ export function ChatbotView({
   const [loading, setLoading] = useState(false);
 
   const quickPrompts = [
-    "How much have I received today?",
-    "Which orders are still unpaid?",
-    "Show me my recent transactions.",
-    "What is my current USDC balance?",
+    'How much have I received today?',
+    'Which orders are still unpaid?',
+    'Show me my recent transactions.',
+    'What is my current USDC balance?',
   ];
 
   const sendMessage = async (textToSend?: string) => {
@@ -55,7 +55,7 @@ export function ChatbotView({
     setLoading(true);
 
     try {
-      const history = messages.map(m => ({
+      const history = messages.map((m) => ({
         role: m.sender,
         content: m.text,
       }));
@@ -74,7 +74,7 @@ export function ChatbotView({
       const assistantMsg: ChatMessage = {
         id: `msg_a_${Date.now()}`,
         sender: 'assistant',
-        text: data.response || "I could not retrieve an answer at this time.",
+        text: data.response || 'I could not retrieve an answer at this time.',
         toolUsed: data.toolUsed,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -96,26 +96,30 @@ export function ChatbotView({
   };
 
   return (
-    <div className={`flex flex-col h-full bg-[#fff3e2] ${isFloating ? '' : 'rounded-[35px] border-[5px] border-[#700c20] p-6 shadow-sm min-h-[600px]'}`}>
+    <div
+      className={`flex flex-col h-full bg-[#FFF8EE] ${
+        isFloating ? '' : 'rounded-2xl border border-[#E8DCD0] p-6 shadow-sm min-h-[600px]'
+      }`}
+    >
       {!isFloating && (
-        <div className="pb-4 border-b border-[#700c20]/20 flex flex-row items-center justify-between mb-4">
+        <div className="pb-4 border-b border-[#EFE5DA] flex flex-row items-center justify-between mb-4">
           <div>
-            <h2 className="font-montserrat-extrabold text-2xl text-zinc-950">
+            <h2 className="font-montserrat-extrabold text-2xl text-[#181412]">
               AI Merchant Assistant
             </h2>
-            <p className="text-xs font-play text-zinc-600 mt-1">
-              Read-only merchant reporting powered by Claude tool calling over verified Base Sepolia receipts.
+            <p className="text-xs text-[#685D55] mt-1">
+              Clear, read-only answers based on your verified payment records.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-play font-bold px-3 py-1 rounded-full bg-[#700c20] text-white">
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#C84B24] text-white">
               Read-Only Guardian
             </span>
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white border border-[#700c20]/30 flex items-center justify-center text-[#700c20] hover:bg-[#700c20] hover:text-white transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-white border border-[#E4D5C5] flex items-center justify-center text-[#C84B24] hover:bg-[#C84B24] hover:text-white transition-colors cursor-pointer"
                 title="Close assistant"
               >
                 <X className="w-4 h-4" />
@@ -130,41 +134,47 @@ export function ChatbotView({
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex items-start gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex items-start gap-2.5 ${
+              msg.sender === 'user' ? 'justify-end' : 'justify-start'
+            }`}
           >
             {msg.sender === 'assistant' && (
-              <div className="w-8 h-8 rounded-full bg-[#700c20] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-[#C84B24] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Bot className="w-4 h-4" />
               </div>
             )}
             <div
-              className={`max-w-[85%] rounded-[24px] px-4 py-3 text-xs sm:text-sm font-play leading-relaxed shadow-sm ${
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm leading-relaxed shadow-xs ${
                 msg.sender === 'user'
-                  ? 'bg-[#700c20] text-white font-medium'
-                  : 'bg-white text-zinc-900 border-2 border-[#700c20]/20'
+                  ? 'bg-[#C84B24] text-white font-medium'
+                  : 'bg-white text-[#181412] border border-[#E8DCD0]'
               }`}
             >
               {msg.toolUsed && (
-                <div className="flex items-center gap-1.5 text-[10px] text-[#700c20] font-bold mb-1.5 uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#1E6B45] font-bold mb-1.5 uppercase tracking-wider">
                   <Database className="w-3 h-3" />
                   <span>Verified via: {msg.toolUsed}</span>
                 </div>
               )}
               <div className="whitespace-pre-line">{msg.text}</div>
-              <div className={`text-[10px] mt-1.5 text-right ${msg.sender === 'user' ? 'text-zinc-200' : 'text-zinc-400'}`}>
+              <div
+                className={`text-[10px] mt-1.5 text-right ${
+                  msg.sender === 'user' ? 'text-[#FFE5D6]' : 'text-[#8C7B6E]'
+                }`}
+              >
                 {msg.timestamp}
               </div>
             </div>
             {msg.sender === 'user' && (
-              <div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center shrink-0 shadow-sm font-bold text-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#181412] text-white flex items-center justify-center shrink-0 shadow-xs font-arain text-xs">
                 U
               </div>
             )}
           </div>
         ))}
         {loading && (
-          <div className="flex items-center gap-2 text-xs text-zinc-600 font-play py-2">
-            <Loader2 className="w-4 h-4 animate-spin text-[#700c20]" />
+          <div className="flex items-center gap-2 text-xs text-[#685D55] py-2">
+            <Loader2 className="w-4 h-4 animate-spin text-[#C84B24]" />
             <span>Consulting on-chain store records...</span>
           </div>
         )}
@@ -176,7 +186,7 @@ export function ChatbotView({
           <button
             key={idx}
             onClick={() => sendMessage(p)}
-            className="text-[11px] font-play font-bold px-3 py-1.5 rounded-full bg-white text-[#700c20] border border-[#700c20] hover:bg-[#700c20] hover:text-white transition-all cursor-pointer shadow-xs"
+            className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-white text-[#463C35] border border-[#E4D5C5] hover:border-[#C84B24] hover:bg-[#C84B24] hover:text-white transition-all cursor-pointer shadow-xs"
           >
             {p}
           </button>
@@ -195,12 +205,12 @@ export function ChatbotView({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about payments, sales, or balance..."
-          className="bg-white border-2 border-[#700c20] rounded-[35px] text-xs font-play h-11 px-4 focus-visible:ring-0 focus-visible:border-[#700c20]"
+          className="bg-white border border-[#DCCBC0] rounded-xl text-xs h-11 px-4 focus-visible:ring-[#C84B24]"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="h-11 px-5 rounded-[35px] bg-[#700c20] text-white font-play font-bold text-xs hover:bg-[#520917] disabled:opacity-50 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
+          className="h-11 px-5 rounded-xl bg-[#C84B24] text-white font-bold text-xs hover:bg-[#A63816] disabled:opacity-50 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
         >
           <Send className="w-3.5 h-3.5" />
           <span>Send</span>

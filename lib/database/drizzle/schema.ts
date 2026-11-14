@@ -94,6 +94,26 @@ export const agentAuditLogs = pgTable('agent_audit_logs', {
   timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Refunds are separate records; pending/processing rows reserve refundable value.
+export const refunds = pgTable('refunds', {
+  id: text('id').primaryKey(),
+  merchantId: text('merchant_id').notNull().references(() => merchants.id, { onDelete: 'cascade' }),
+  orderId: text('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  originalPaymentId: text('original_payment_id').notNull().references(() => transactions.id),
+  amount: numeric('amount', { precision: 14, scale: 6 }).notNull(),
+  currency: varchar('currency', { length: 10 }).default('USDC').notNull(),
+  recipientAddress: text('recipient_address').notNull(),
+  txHash: text('tx_hash').unique(),
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(),
+  reason: varchar('reason', { length: 80 }).notNull(),
+  gasCostWei: text('gas_cost_wei'),
+  feePayer: varchar('fee_payer', { length: 20 }).default('MERCHANT').notNull(),
+  idempotencyKey: text('idempotency_key').notNull().unique(),
+  failureReason: text('failure_reason'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+});
+
 // Relations
 export const merchantsRelations = relations(merchants, ({ many, one }) => ({
   orders: many(orders),
@@ -141,6 +161,7 @@ export type DrizzleSupplier = typeof suppliers.$inferSelect;
 export type DrizzleSupplierInvoice = typeof supplierInvoices.$inferSelect;
 export type DrizzleTreasuryPolicy = typeof treasuryPolicies.$inferSelect;
 export type DrizzleAgentAuditLog = typeof agentAuditLogs.$inferSelect;
+export type DrizzleRefund = typeof refunds.$inferSelect;
 
 // Drizzle-Zod Schemas for Type-Safe Validation
 export const insertMerchantSchema = createInsertSchema(merchants);
@@ -163,3 +184,5 @@ export const selectTreasuryPolicySchema = createSelectSchema(treasuryPolicies);
 
 export const insertAgentAuditLogSchema = createInsertSchema(agentAuditLogs);
 export const selectAgentAuditLogSchema = createSelectSchema(agentAuditLogs);
+export const insertRefundSchema = createInsertSchema(refunds);
+export const selectRefundSchema = createSelectSchema(refunds);

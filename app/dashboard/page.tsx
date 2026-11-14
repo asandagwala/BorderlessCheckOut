@@ -17,6 +17,8 @@ import {
   ExternalLink,
   CheckCircle2,
   Clock,
+  RotateCcw,
+  Banknote,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { UhuruLogo } from '@/components/ui/uhuru-logo';
@@ -27,8 +29,10 @@ import { TreasuryAgentView } from '@/modules/ai-treasury-agent/components/Treasu
 import { SuppliersAndInvoicesView } from '@/modules/suppliers/components/SuppliersAndInvoicesView';
 import { AuditLogsTable } from '@/modules/audit-logs/components/AuditLogsTable';
 import { FloatingChatbot } from '@/modules/ai-chatbot/components/FloatingChatbot';
+import { RefundsDashboardPanel } from '@/modules/refunds/components/RefundsDashboardPanel';
+import { CashOutView } from '@/modules/cash-out/components/CashOutView';
 
-type TabType = 'overview' | 'orders' | 'transactions' | 'treasury-agent' | 'suppliers' | 'audit-logs';
+type TabType = 'overview' | 'orders' | 'transactions' | 'refunds' | 'cash-out' | 'treasury-agent' | 'suppliers' | 'audit-logs';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -97,6 +101,8 @@ export default function DashboardPage() {
     { id: 'overview', label: 'Overview', subtitle: 'Balance & quick actions', icon: LayoutDashboard },
     { id: 'orders', label: 'Customer Orders', subtitle: 'Payment links & statuses', icon: ShoppingBag },
     { id: 'transactions', label: 'Transactions', subtitle: 'On-chain Base Sepolia ledger', icon: ArrowLeftRight },
+    { id: 'refunds', label: 'Refunds', subtitle: 'Verified USDC returns', icon: RotateCcw },
+    { id: 'cash-out', label: 'Cash-out', subtitle: 'Simulated ZAR payout', icon: Banknote },
     { id: 'treasury-agent', label: 'Treasury', subtitle: 'Policy-guarded payouts', icon: ShieldCheck },
     { id: 'suppliers', label: 'Suppliers & Invoices', subtitle: 'Approved vendors & bills', icon: Users },
     { id: 'audit-logs', label: 'Monthly activity', subtitle: 'Audit trail & decisions', icon: CalendarClock },
@@ -520,6 +526,10 @@ export default function DashboardPage() {
           {activeTab === 'transactions' && (
             <TransactionsTable transactions={statsData?.recentTransactions || []} />
           )}
+
+          {activeTab === 'refunds' && <RefundsDashboardPanel merchantId={merchantId} />}
+
+          {activeTab === 'cash-out' && <CashOutView key={merchantId} merchantId={merchantId} />}
 
           {/* TAB 4: AI TREASURY AGENT */}
           {activeTab === 'treasury-agent' && (

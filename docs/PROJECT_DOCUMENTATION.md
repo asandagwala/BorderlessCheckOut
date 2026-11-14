@@ -254,6 +254,8 @@ See each `route.ts` file for the exact request fields and response shape. API va
 | USDC decimals | `6` |
 | Explorer | [sepolia.basescan.org](https://sepolia.basescan.org) |
 
+The configured demo merchant wallet is `0xA8f73eb996C58688240474D442C1D467f7171D58`. The customer wallet for the testnet demo is `0x6564309C50f907C3E8CA86f014A1A879754ED919`; connect it in the customer's browser wallet when testing checkout. The merchant address is the app's default already. The customer address is used in local sample transaction records; real checkout payments use whichever customer wallet is connected.
+
 ## 9. Checks and troubleshooting
 
 ### `pnpm db:push` cannot connect

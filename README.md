@@ -83,6 +83,8 @@ pnpm db:studio    # Open Drizzle Studio
 
 - Chain: Base Sepolia, chain ID `84532`
 - USDC test token: `0x036CbD53842c5426634e7929541eC2318f3dCF7e` (6 decimals)
+- Merchant wallet: `0xA8f73eb996C58688240474D442C1D467f7171D58`
+- Customer wallet: `0x6564309C50f907C3E8CA86f014A1A879754ED919` (connect it on the checkout page)
 - RPC: `https://sepolia.base.org`
 - Explorer: [BaseScan Sepolia](https://sepolia.basescan.org)
 - Treasury execution: disabled unless `TREASURY_EXECUTION_ENABLED=true` is set on the server with a test-only private key and API key.
